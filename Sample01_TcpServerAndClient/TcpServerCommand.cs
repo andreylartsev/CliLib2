@@ -11,6 +11,9 @@ namespace Sample01_TcpServerAndClient
     internal class TcpServerCommand : Cli.ICommand
     {
         [Cli.Named]
+        public bool PrintArgs = false;
+
+        [Cli.Named]
         [Cli.AllowedRange(0)]
         public uint WaitingMilliseconds = 100;
 
@@ -47,6 +50,9 @@ namespace Sample01_TcpServerAndClient
 
         public void Exec()
         {
+            if (this.PrintArgs)
+                Cli.PrintArgs(this);
+
             var separatorByte = System.Text.Encoding.ASCII.GetBytes("\n");
 
             Console.WriteLine($"Binding to: {this.BindTo}:{this.Port} ...");
@@ -58,7 +64,7 @@ namespace Sample01_TcpServerAndClient
             server.Bind(bindToEndPoint);
             try
             {
-                Console.WriteLine("Waiting the client...");
+                Console.WriteLine("Waiting for the clients...");
                 server.Listen(100);
                 while (true)
                 {

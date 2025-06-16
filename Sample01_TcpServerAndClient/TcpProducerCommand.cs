@@ -9,6 +9,8 @@ namespace Sample01_TcpServerAndClient
     [Cli.GenerateSample]
     internal class TcpProducerCommand : Cli.ICommand
     {
+        [Cli.Named]
+        public bool PrintArgs = false;
 
         [Cli.Doc("Connecting to specific IP address or hostname i.e. \"127.0.0.1\" / \"localhost\" ")]
         [Cli.Positional]
@@ -46,14 +48,21 @@ namespace Sample01_TcpServerAndClient
         public void Exec()
         {
 
+            if (this.PrintArgs)
+                Cli.PrintArgs(this);
+
             Socket socket = new Socket(SocketType.Stream, ProtocolType.Tcp);
             socket.Connect(this.Host, this.Port);
-            socket.SendBufferSize = this.SendingBufferSize;
-            var startTime = DateTime.Now;
-            Console.WriteLine("connected.");
-            long totalBytesSent = 0;
             try
             {
+                Console.WriteLine($"Connected to {this.Host}:{this.Port}");
+
+                socket.SendBufferSize = this.SendingBufferSize;
+                
+                var startTime = DateTime.Now;
+                
+                long totalBytesSent = 0;
+
                 for (int i = 0; i < this.NumberOfMessages; i++)
                 {
                     Console.WriteLine($"at {DateTime.Now.Subtract(startTime).TotalSeconds} second : building message...");
@@ -69,6 +78,7 @@ namespace Sample01_TcpServerAndClient
             finally
             {
                 socket.Close();
+                Console.WriteLine("connection closed.");
             }
         }
         private static byte[] GetMessageBytes(long id, long length)
