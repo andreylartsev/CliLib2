@@ -11,6 +11,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample00_Simple", "Sample00
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample02_RestOfArguments", "Sample02_RestOfArguments\Sample02_RestOfArguments.csproj", "{4497734B-908C-4997-9151-D6581AB3FD30}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{8806BFB8-3273-4855-BB14-43094E913920}"
+	ProjectSection(SolutionItems) = preProject
+		Doc\Cli.xmind = Doc\Cli.xmind
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
