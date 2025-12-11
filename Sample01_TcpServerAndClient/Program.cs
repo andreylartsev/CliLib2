@@ -19,40 +19,7 @@ namespace Sample01_TcpServerAndClient
                     new TcpProducerCommand(),
                 };
 
-                try
-                {
-                    var command = Cli.ParseCommandLine(args, commands);
-                    command.Exec();
-                }
-                catch (Cli.PrintAppSettingsException)
-                {
-                    Cli.PrintAppSettings(program, commands);
-                }
-                catch (Cli.ProgramHelpException e)
-                {
-                    Cli.PrintCommandLine(args);
-                    Cli.PrintUsage(program, commands, e.HelpType);
-                }
-                catch (Cli.CommandHelpException e)
-                {
-                    Cli.PrintCommandUsage(e.Command, e.HelpType);
-                }
-                catch (Cli.PrintVersionException)
-                {
-                    Cli.PrintVersion();
-                }
-                catch (Cli.UnknownCommandException e)
-                {
-                    Console.WriteLine(e.Message);
-                    Cli.PrintCommandLine(args);
-                    Cli.PrintUsage(program, commands);
-                }
-                catch (Cli.ArgumentParseException e)
-                {
-                    Console.WriteLine(e.Message);
-                    Cli.PrintCommandLine(args);
-                    Cli.PrintCommandUsage(e.Command as Cli.ICommand);
-                }
+                new Cli.MultiCommandLine(program, commands).ParseArgs(args).Exec();
 
             }
             catch (Exception ex)

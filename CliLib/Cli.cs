@@ -1,4 +1,6 @@
 ﻿using System;
+
+using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -2398,6 +2400,176 @@ namespace CliLib
             }
         }
 
+        public class SimpleCommandLine : IExecutable
+        {
+            public SimpleCommandLine(IExecutable program)
+            {
+                if (program == null)
+                    throw new ArgumentNullException(nameof(program));
+                this.program = program;
+            }
+            public IExecutable ParseArgs(string[] args)
+            {
+                this.actionToCall = null;
+                try
+                {
+                    Cli.ParseCommandLine(args, this.program);
+                    this.actionToCall = () => 
+                    { 
+                        this.program.Exec(); 
+                    };
+                }
+                catch (Cli.PrintAppSettingsException)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Cli.PrintAppSettings(this.program);
+                    };
+                }
+                catch (Cli.ProgramHelpException e)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Cli.PrintCommandLine(args);
+                        Cli.PrintUsage(this.program, e.HelpType);
+                    };
+                }
+                catch (Cli.PrintVersionException)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Cli.PrintVersion();
+                    };
+                }
+                catch (Cli.ArgumentParseException e)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Console.WriteLine(e.Message);
+                        Cli.PrintCommandLine(args);
+                        Cli.PrintUsage(this.program);
+                    };
+                }
+                return this;
+            }
+
+            public void Exec()
+            {
+                if (this.actionToCall == null)
+                    throw new InvalidOperationException($"Operation was not prepared properly to execute");
+                this.actionToCall();
+            }
+
+            private readonly IExecutable program = null;
+            private Action actionToCall = null;
+        }
+
+        public class MultiCommandLine : IExecutable
+        {
+            public MultiCommandLine(Object program, ICommand[] commands)
+            {
+                if (program == null)
+                    throw new ArgumentNullException(nameof(program));
+                if (commands == null)
+                    throw new ArgumentNullException(nameof(commands));
+                if (commands.Length == 0)
+                    throw new ArgumentException($"{nameof(commands)} must not be empty collection");
+                this.program = program;
+                this.commands = commands;
+            }
+            public IExecutable ParseArgs(string[] args)
+            {
+                this.actionToCall = null;
+                try
+                {
+                    var commandToCall = Cli.ParseCommandLine(args, this.commands);
+                    this.actionToCall = () =>
+                    {
+                        commandToCall.Exec();
+                    };
+                }
+                catch (Cli.PrintAppSettingsException)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Cli.PrintAppSettings(this.program, this.commands);
+                    };
+                }
+                catch (Cli.ProgramHelpException e)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Cli.PrintCommandLine(args);
+                        Cli.PrintUsage(this.program, this.commands, e.HelpType);
+                    };
+                }
+                catch (Cli.CommandHelpException e)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Cli.PrintCommandLine(args);
+                        var commandToHelpWith = e.Command as Cli.ICommand;
+                        if (commandToHelpWith != null)
+                        {
+                            Cli.PrintCommandUsage(commandToHelpWith);
+                        }
+                        else
+                        {
+                            Cli.PrintCommandLine(args);
+                            Cli.PrintUsage(this.program, this.commands);
+                        }
+                    };
+                }
+                catch (Cli.PrintVersionException)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Cli.PrintVersion();
+                    };
+                }
+                catch (Cli.UnknownCommandException e)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Console.WriteLine(e.Message);
+                        Cli.PrintCommandLine(args);
+                        Cli.PrintUsage(this.program, this.commands);
+                    };
+                }
+                catch (Cli.ArgumentParseException e)
+                {
+                    this.actionToCall = () =>
+                    {
+                        Console.WriteLine(e.Message);
+                        Cli.PrintCommandLine(args);
+                        var commandToHelpWith = e.Command as Cli.ICommand;
+                        if (commandToHelpWith != null)
+                        {
+                            Cli.PrintCommandUsage(commandToHelpWith);
+                        }
+                        else
+                        {
+                            Cli.PrintCommandLine(args);
+                            Cli.PrintUsage(this.program, this.commands);
+                        }
+                    };
+                }
+                return this;
+            }
+
+            public void Exec()
+            {
+                if (this.actionToCall == null)
+                    throw new InvalidOperationException($"Operation was not prepared properly to execute");
+                this.actionToCall();
+            }
+
+            private readonly Object program = null;
+            private readonly ICommand [] commands = new ICommand[] {};
+            private Action actionToCall = null;
+        }
+
+
         [AttributeUsage(AttributeTargets.Field)]
         public class PositionalAttribute : Attribute
         {
@@ -2568,10 +2740,14 @@ namespace CliLib
             public UserInterruptedInputException(string message, Exception innerException) : base(message, innerException) { }
         }
 
-        public interface ICommand
+        public interface IExecutable
+        {
+            void Exec();
+        };
+
+        public interface ICommand : IExecutable
         {
             string CommandName { get; }
-            void Exec();
         };
     }
 }

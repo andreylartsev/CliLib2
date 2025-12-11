@@ -6,7 +6,7 @@ namespace Sample02_RestOfArguments
 {
 
     [Cli.Doc(@"The test program documentation goes here")]
-    internal class Program
+    internal class Program : Cli.IExecutable
     {
         [Cli.Doc("Print given arguments before execution")]
         [Cli.Named('A')]
@@ -18,52 +18,31 @@ namespace Sample02_RestOfArguments
         [Cli.Required]
         public string[] FileName = { };
 
+        public void Exec()
+        {
+            if (this.PrintArgs)
+                Cli.PrintArgs(this);
+
+            foreach (var fileName in this.FileName)
+            {
+                FileInfo fileInfo = new FileInfo(fileName);
+                if (fileInfo.Exists)
+                {
+                    Console.WriteLine($"{fileName} exists");
+                }
+                else
+                {
+                    Console.WriteLine($"{fileName} does not exists");
+                }
+            }
+        }
+
         public static void Main(string[] args)
         {
             try
             {
-                Program p = new Program();
-                try
-                {
-                    Cli.ParseCommandLine(args, p);
-
-                    if (p.PrintArgs)
-                        Cli.PrintArgs(p);
-
-                    foreach (var fileName in p.FileName)
-                    {
-                        FileInfo fileInfo = new FileInfo(fileName);
-                        if (fileInfo.Exists)
-                        {
-                            Console.WriteLine($"{fileName} exists");
-                        }
-                        else
-                        {
-                            Console.WriteLine($"{fileName} does not exists");
-                        }
-                    }
-
-                }
-                catch (Cli.PrintAppSettingsException)
-                {
-                    Cli.PrintAppSettings(p);
-                }
-                catch (Cli.PrintVersionException)
-                {
-                    Cli.PrintVersion();
-                }
-                catch (Cli.ProgramHelpException e)
-                {
-                    Cli.PrintCommandLine(args);
-                    Cli.PrintUsage(p, e.HelpType);
-                }
-                catch (Cli.ArgumentParseException e)
-                {
-                    Console.WriteLine(e.Message);
-                    Cli.PrintCommandLine(args);
-                    Cli.PrintUsage(p, Cli.HelpType.Full);
-                }
-
+                var p = new Program();
+                new Cli.SimpleCommandLine(p).ParseArgs(args).Exec();
             }
             catch (Exception ex)
             {
