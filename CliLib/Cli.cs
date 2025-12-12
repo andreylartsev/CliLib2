@@ -2681,7 +2681,7 @@ namespace CliLib
         [AttributeUsage(AttributeTargets.Field)]
         public class InteractiveAttribute : Attribute
         {
-            public InteractiveAttribute(string label, bool useDafultIfEmpty)
+            public InteractiveAttribute(string label, bool useDefaultIfEmpty)
             {
             }
         }
