@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -612,6 +613,14 @@ namespace CliLib
                 {
                     converted = DateTimeOffset.Parse(
                         strArgValue, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal);
+                }
+                else if (targetType == typeof(FileInfo))
+                {
+                    converted = new FileInfo(strArgValue);
+                }
+                else if (targetType == typeof(IPHostEntry))
+                {
+                    converted = Dns.GetHostEntry(strArgValue);
                 }
                 else
                 {

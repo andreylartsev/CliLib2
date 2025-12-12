@@ -36,8 +36,8 @@ namespace Sample01_TcpServerAndClient
         [Cli.Doc("binding to specific IP address i.e. \"0.0.0.0\" / \"127.0.0.1\"  ")]
         [Cli.Named('B')]
         [Cli.SampleValue]
-        [Cli.AllowedRegexPattern(@"\d+\.\d+\.\d+\.\d+")]
-        public string BindTo = "127.0.0.1";
+        [Cli.Required]
+        public IPHostEntry BindTo;
 
         [Cli.Doc("bind to specific IP port i.e. 1000. Note that binding to ports with number equals or less than 1000 required root permissions")]
         [Cli.Positional]
@@ -57,8 +57,7 @@ namespace Sample01_TcpServerAndClient
 
             Console.WriteLine($"Binding to: {this.BindTo}:{this.Port} ...");
 
-            IPAddress bindToAddress = Dns.GetHostEntry(this.BindTo).AddressList[0];
-            IPEndPoint bindToEndPoint = new IPEndPoint(bindToAddress, this.Port);
+            IPEndPoint bindToEndPoint = new IPEndPoint(this.BindTo.AddressList[0], this.Port);
 
             Socket server = new Socket(SocketType.Stream, ProtocolType.Tcp);
             server.Bind(bindToEndPoint);

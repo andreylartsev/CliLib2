@@ -16,23 +16,22 @@ namespace Sample02_RestOfArguments
         [Cli.Positional]
         [Cli.RestOfArguments]
         [Cli.Required]
-        public string[] FileName = { };
+        public FileInfo[] FileName = { };
 
         public void Exec()
         {
             if (this.PrintArgs)
                 Cli.PrintArgs(this);
 
-            foreach (var fileName in this.FileName)
+            foreach (var fileInfo in this.FileName)
             {
-                FileInfo fileInfo = new FileInfo(fileName);
                 if (fileInfo.Exists)
                 {
-                    Console.WriteLine($"{fileName} exists");
+                    Console.WriteLine($"{fileInfo.Name} exists");
                 }
                 else
                 {
-                    Console.WriteLine($"{fileName} does not exists");
+                    Console.WriteLine($"{fileInfo.Name} does not exists");
                 }
             }
         }
