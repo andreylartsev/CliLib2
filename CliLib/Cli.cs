@@ -2002,6 +2002,9 @@ namespace CliLib
             string Could_not_find_the_command(string commandName);
             string The_field_does_not_support_interactive_input(string fieldName);
             string The_argument_must_not_be_null_or_empty_string(string argumentName);
+            string The_argument_must_not_be_empty_collection(string argumentName);
+            string The_operation_must_be_prepared_properly_to_execute();
+
             string just_press_enter_to_use_default_value();
             string press_Ctrl_C_to_interrupt();
             string Command_line_provided();
@@ -2082,6 +2085,11 @@ namespace CliLib
                 => $"The field \"{fieldName}\" does not support interactive input!";
             public string The_argument_must_not_be_null_or_empty_string(string argumentName)
                 => $"The argument \"{argumentName}\" must not be null or empty string";
+            public string The_argument_must_not_be_empty_collection(string argumentName)
+                => $"The argument \"{argumentName}\" must not be empty collection";
+            public string The_operation_must_be_prepared_properly_to_execute()
+                => $"The operation must be prepared properly to execute";
+
             public string just_press_enter_to_use_default_value()
                 => $"   - just press enter to use default value";
             public string press_Ctrl_C_to_interrupt()
@@ -2189,6 +2197,11 @@ namespace CliLib
                  => $"Поле \"{fieldName}\" не поддерживает интерактивный ввод!";
             public string The_argument_must_not_be_null_or_empty_string(string argumentName)
                 => $"Параметр \"{argumentName}\" должен быть не нулевой и не пустая строка";
+            public string The_argument_must_not_be_empty_collection(string argumentName)
+                => $"Параметр \"{argumentName}\" не может быть пустой коллекцией";
+
+            public string The_operation_must_be_prepared_properly_to_execute()
+                => $"Операция должна быть корректно подготовлена для исполнения";
             public string just_press_enter_to_use_default_value()
                 => $"   - просто нажмите Enter чтобы использовать значение по умолчанию";
             public string press_Ctrl_C_to_interrupt()
@@ -2456,7 +2469,7 @@ namespace CliLib
             public void Exec()
             {
                 if (this.actionToCall == null)
-                    throw new InvalidOperationException($"Operation was not prepared properly to execute");
+                    throw new InvalidOperationException(L10n.The_operation_must_be_prepared_properly_to_execute());
                 this.actionToCall();
             }
 
@@ -2473,7 +2486,7 @@ namespace CliLib
                 if (commands == null)
                     throw new ArgumentNullException(nameof(commands));
                 if (commands.Length == 0)
-                    throw new ArgumentException($"{nameof(commands)} must not be empty collection");
+                    throw new ArgumentException(L10n.The_argument_must_not_be_empty_collection(nameof(commands)));
                 this.program = program;
                 this.commands = commands;
             }
@@ -2560,7 +2573,7 @@ namespace CliLib
             public void Exec()
             {
                 if (this.actionToCall == null)
-                    throw new InvalidOperationException($"Operation was not prepared properly to execute");
+                    throw new InvalidOperationException(L10n.The_operation_must_be_prepared_properly_to_execute());
                 this.actionToCall();
             }
 
