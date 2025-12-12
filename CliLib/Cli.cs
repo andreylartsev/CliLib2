@@ -256,20 +256,21 @@ namespace CliLib
             if (obj == null)
                 throw new ArgumentNullException("obj");
 
-
+            // read all arguments 
             var allFields =
-                GetArgumentFields(obj, ArgumentFieldTypes.ForCommandLineParsing);
+                GetArgumentFields(obj, ArgumentFieldTypes.All);
 
             // read arguments from appSettings
             ReadArgumentsFromAppSettings(obj, allFields, true);
-            // read arguments from environment variables
-            ReadArgumentsFromEnvironmentVariables(obj, allFields, true);
-            // commit everything to the target
+            // commit everything to the target so they are sort of new defaults now
             CommitAllNewValues(obj, allFields);
 
-            // re-read arguments but only named and positional
+            // re-read all arguments
             allFields =
-                GetArgumentFields(obj, ArgumentFieldTypes.NamedOrPositional);
+                GetArgumentFields(obj, ArgumentFieldTypes.All);
+
+            // read arguments from environment variables
+            ReadArgumentsFromEnvironmentVariables(obj, allFields, true);
 
             int positionalArgumentIndex = 0;
             for (int index = 0; index < args.Length; index++)
@@ -353,11 +354,15 @@ namespace CliLib
                 // make sure that all of the fields with required flag have got new value
                 if (field.IsRequired && field.NewValue == null)
                 {
-                    if (field.IsNamed)
+                    if (field.IsInteractive)
+                    {
+                        AskUserForInput(obj, field.Info.Name);
+                    }
+                    else if (field.IsNamed)
                         throw new ArgumentParseException(L10n.The_argument_name_must_be_provided(field.ArgumentName), obj);
                     else if (field.IsPositional)
                         throw new ArgumentParseException(L10n.The_argument_with_index_must_be_provided(field.ArgumentName, field.PositionIndex + 1), obj);
-                    else // interactive and app settings only
+                    else // anything else
                         throw new ArgumentParseException(L10n.The_argument_name_must_be_provided(field.ArgumentName), obj);
                 }
             }
@@ -416,7 +421,7 @@ namespace CliLib
             // read arguments from appSettings
             foreach (var argumentField in argumentFields)
             {
-                if (argumentField.IsAppSettings || argumentField.IsNamed || argumentField.IsPositional || argumentField.IsInteractive)
+                if (argumentField.IsAppSettings || argumentField.IsNamed || argumentField.IsPositional || argumentField.IsInteractive || argumentField.IsEnvironmentVar)
                 {
                     if (TryGetValueFromAppSettings(
                         obj, argumentField.ArgumentName, argumentField.Info.FieldType.IsArray, out string strArgValue))
