@@ -13,14 +13,14 @@ namespace Sample03_Interactive
         [Cli.Named('A')]
         public bool PrintArgs = false;
         
-        [Cli.Doc("It is a master key")]
+        [Cli.Doc("Master key to decrypt secrets stored within configuration")]
         [Cli.Interactive("Please enter master key", false)]
         [Cli.EnvironmentVariable("MASTER_KEY")]
         [Cli.Secret]
         [Cli.Required]
         public string MasterKey = string.Empty;
 
-        [Cli.Doc("File names to check if they are exists")]
+        [Cli.Doc("Connection password stored within app.config")]
         [Cli.AppSettings]
         [Cli.Secret]
         public string ConnectionPassword = "123";
