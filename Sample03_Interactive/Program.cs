@@ -1,6 +1,7 @@
 ﻿using CliLib;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 
 namespace Sample03_Interactive
 {
@@ -31,7 +32,13 @@ namespace Sample03_Interactive
 
             Console.WriteLine("Now you would see results of decryption of the password stored within app.config.");
             Cli.AskIfUserWantedContinue("Would you like to continue?", "Yes", "No");
-            Console.WriteLine($"masterKey={this.MasterKey}, connectionPassword={this.ConnectionPassword}");
+            var decrypted = ImitationOfDecryption(this.ConnectionPassword, this.MasterKey);
+            Console.WriteLine($"Original masterKey={this.MasterKey}, and connectionPassword={this.ConnectionPassword}, decrypted={decrypted}");
+        }
+
+        public static string ImitationOfDecryption(string connectionPassword, string masterKey)
+        {
+            return $"Decrypted[{connectionPassword}] with key={masterKey}";
         }
 
         public static void Main(string[] args)
