@@ -1,10 +1,27 @@
 DESCRIPTION:
 
-A Single file CLI (Command Line Interface) library written in C#
+A single file CLI (Command Line Interface) library, similar to picocli but written in C#.
+The focus is on wider compatibility and minimization of external dependencies.
+The key part of functionality is replacement of imperative programming with a declarative one using attribute annotations.
+Ability use the same source i.e. attribute annotations on the fields and classes to parse the command line and generate documentation for program.
+Where possible used the approach to use the single information source for multiple purposes i.e. generate parameter names from the field names. 
 
 Supported features:
 
-1. Parsing command line and mapping them to public fields of the provided class(es)
+1. Parsing command line arguments, supported both named and positional parameters;
+2. Parameter validation, supported mandatory presence, allowed range check and regex patterns;
+3. Use Subcommands of a program;
+4. Automatic program documentation generation;
+5. Reading parameter defaults from appSettings (yes, I know that appSettings is deprecated);
+6. Request missing or special parameters interactively;
+7. Reading parameters from environment variables;
+8. Basic support for secret parameters that could be passed to program either via environment variable or interactively and it's value never appears in the program output like help generation.
+9. Embedded localization support through implementation of Cli.L10n interface.
+
+
+In details:
+
+1. Parsing command line and mapping them to the fields of the provided class (or classes) using .NET reflection mechanisms.
 
 	i.e. arguments of program provided in command line 
 	
@@ -183,8 +200,3 @@ Usage: > Sample03_Interactive.exe [-h|--help] | [-v|--version] | [--print-app-se
    - could be passed via environment variable $MASTER_KEY
    - the data type is [string]
 
-
-==
-
-2. two
-3. three
