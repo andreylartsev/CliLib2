@@ -38,7 +38,7 @@ Supported features:
 	
 	should be provided within command line arguments in the following way:
 
-		prog1.exe --port-number 123
+		$ prog1.exe --port-number 123
 
 	For sure the extra attribute Cli.RestOfArguments for Cli.Positional supported:
 
@@ -46,6 +46,8 @@ Supported features:
         [Cli.RestOfArguments]
         [Cli.Required]
         public FileInfo[] FileName = {}
+
+		$ prog1.exe ~/*.txt
 
 	The supported data types are the following:
 	- any value based types supported automatic conversion from string via Convert.ChangeType(string, Type);
@@ -69,7 +71,7 @@ Supported features:
 
 4. Automatic documentation generation through support of using Cli.Doc attribute to annotate fields and classes and using methods Cli.PrintUsage() / Cli.PrintCommandUsage().
    Additionally attributes Cli.SampleValue and Cli.GenerateSample helps generate reasonable samples in the output of Cli.PrintUsage();
-   For use Cli.AllowedRegexPattern and Cli.AllowedRange included in argument description of the generated documentation;
+   For sure Cli.AllowedRegexPattern and Cli.AllowedRange included in argument description of the generated documentation;
 
 		[Cli.Doc(@"The test program documentation goes here")]
 		[Cli.GenerateSample]
