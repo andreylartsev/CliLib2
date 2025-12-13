@@ -80,15 +80,30 @@ Supported features:
 			 value="aaa[[Cli.arg1]]bbb"/>
 
 
-6. Reading argument value from environment variables through the using of Cli.EnvironmentVariable annotation attribute for field
+6. Reading argument value interactively through the using of Cli.Interactive annotation attribute for field
 
-        [Cli.EnvironmentVariable("ENV_VAR")]
-        public string EnvVar1 = string.Empty;        
+        [Cli.Interactive("Please enter master key", false)]
+        [Cli.Required]
+        public string MasterKey = string.Empty;
 
-7. Reading argumenty value from environment variables through the using of Cli.EnvironmentVariable annotation attribute for field
+		This argument will be requested automatically during Cli.ParseCommandLine()
 
-        [Cli.EnvironmentVariable("ENV_VAR")]
-        public string EnvVar1 = string.Empty;        
+		>.\Sample03_Interactive.exe
+		Please enter master key:
+		   - the data type is [string]
+		   - is required to provide
+		   - the value is a secret
+		   - press Ctrl-C to interrupt
+		> *****
+
+7. Reading argument value from environment variables through the using of Cli.EnvironmentVariable annotation attribute for field
+
+        [Cli.EnvironmentVariable("MASTER_KEY")]
+        public string MasterKey = string.Empty;       
+
+		# could be running in Linux environment as the following
+
+		$ MASTER_KEY=password123 mono prog1.exe
 
 8. Basic support for secrets. The attribute Cli.Secret if applied prevent display of it's value in generated documentation and samples.
    Also it turns reading of argument interactively into secret mode with masking user's input with stars
