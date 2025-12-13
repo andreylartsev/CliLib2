@@ -20,13 +20,11 @@ namespace Sample01_TcpServerAndClient
                 };
 
                 new Cli.MultiCommandLine(program, commands).ParseArgs(args).Exec();
-
             }
             catch (Exception ex)
             { 
                 Console.WriteLine(ex.ToString());
             }
-
         }
 
     }

@@ -16,7 +16,8 @@ Supported features:
 6. Request missing or special parameters interactively;
 7. Reading parameters from environment variables;
 8. Basic support for secret parameters that could be passed to program either via environment variable or interactively and it's value never appears in the program output like help generation.
-9. Embedded localization support through implementation of Cli.L10n interface.
+9. Embedded localization support through implementation of Cli.L10n interface;
+10. Syntax sugar to simplify Main() method implementation using SimpleCommandLine / MultiCommandLine classes.
 
 
 In details:
@@ -175,6 +176,43 @@ In details:
 
 
 9. Embedded localization support through implementation of Cli.L10n interface within Cli.cs (no extra resources needed)
+
+10. Use of SimpleCommandLine and MultiCommandLine classes to simplify Main() method implementation:
+
+        public static void Main(string[] args)
+        {
+            try
+            {
+                var p = new Program();
+                new Cli.SimpleCommandLine(p).ParseArgs(args).Exec();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
+        }
+
+   and with support of program subcommands:
+
+        public static void Main(string[] args)
+        {
+            try
+            {
+                Program program = new Program();
+
+                Cli.ICommand[] commands =
+                {
+                    new TcpServerCommand(),
+                    new TcpProducerCommand(),
+                };
+
+                new Cli.MultiCommandLine(program, commands).ParseArgs(args).Exec();
+            }
+            catch (Exception ex)
+            { 
+                Console.WriteLine(ex.ToString());
+            }
+        }
 
 
 TODO:

@@ -11,13 +11,6 @@ namespace Sample02_RestOfArguments
         [Cli.Doc("Print given arguments before execution")]
         [Cli.Named('A')]
         public bool PrintArgs = false;
-        
-        [Cli.Doc("It is a password")]
-        [Cli.Interactive("Please enter passwords", false)]
-        [Cli.Named]
-        [Cli.Secret]
-        [Cli.Required]
-        public string Password = string.Empty;
 
         [Cli.Doc("File names to check if they are exists")]
         [Cli.Positional]
@@ -55,7 +48,6 @@ namespace Sample02_RestOfArguments
             {
                 Console.WriteLine(ex.ToString());
             }
-
         }
 
     }
