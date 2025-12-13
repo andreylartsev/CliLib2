@@ -14,7 +14,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Doc", "Doc", "{8806BFB8-3273-4855-BB14-43094E913920}"
 	ProjectSection(SolutionItems) = preProject
 		Doc\Cli.xmind = Doc\Cli.xmind
-		doc.txt = doc.txt
+		Doc\doc.txt = Doc\doc.txt
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Sample02_Interactive", "Sample03_Interactive\Sample02_Interactive.csproj", "{E1E615D7-CB94-4866-9C42-4A0530E91B72}"
