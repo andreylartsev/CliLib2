@@ -178,6 +178,7 @@ In details:
 9. Embedded localization support through implementation of Cli.L10n interface within Cli.cs (no extra resources needed)
 
 10. Use of SimpleCommandLine and MultiCommandLine classes to simplify Main() method implementation:
+	See the sample Sample02_RestOfArguments:
 
         public static void Main(string[] args)
         {
@@ -192,7 +193,7 @@ In details:
             }
         }
 
-   and with support of program subcommands:
+   and with support of program subcommands (see Sample01_TcpServerAndClient):
 
         public static void Main(string[] args)
         {
