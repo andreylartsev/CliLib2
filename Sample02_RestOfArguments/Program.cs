@@ -12,12 +12,12 @@ namespace Sample02_RestOfArguments
         [Cli.Named('A')]
         public bool PrintArgs = false;
         
-        [Cli.Doc("Password")]
+        [Cli.Doc("It is a password")]
         [Cli.Interactive("Please enter passwords", false)]
         [Cli.Named]
         [Cli.Secret]
         [Cli.Required]
-        public string[] Passwords = { };
+        public string Password = string.Empty;
 
         [Cli.Doc("File names to check if they are exists")]
         [Cli.Positional]

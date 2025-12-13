@@ -1054,22 +1054,19 @@ namespace CliLib
 
             foreach (var argumentField in argumentFields)
             {
-                if (IsArgumentFieldForAppSettingsKeysHelp(argumentField))
-                {
-                    appSettingsDocumentation.AppendLine($"  <!--");
-                    if (TryGetArgumentDocumentation(argumentField.Info, out var documentation))
-                        appSettingsDocumentation.AppendLine($"   - {documentation}");
-                    AppendArgumentDocumentation(argumentField, cmd, appSettingsDocumentation, true);
-                    appSettingsDocumentation.AppendLine($"  -->");
-                    var val = argumentField.Info.GetValue(cmd);
-                    var str = StringValueOfSinleObjectOrArray(val, argumentField.IsSecret, argumentField.IsRestOfArguments);
-                    var xmlEscaped = EscapeXmlSpecialSymbols(str);
-                    if (!string.IsNullOrEmpty(commandName))
-                        appSettingsDocumentation.AppendLine($"  <add key=\"Cli.{commandName}.{argumentField.ArgumentName}\"");
-                    else
-                        appSettingsDocumentation.AppendLine($"  <add key=\"Cli.{argumentField.ArgumentName}\"");
-                    appSettingsDocumentation.AppendLine($"       value=\"{xmlEscaped}\"/>");
-                }
+                appSettingsDocumentation.AppendLine($"  <!--");
+                if (TryGetArgumentDocumentation(argumentField.Info, out var documentation))
+                    appSettingsDocumentation.AppendLine($"   - {documentation}");
+                AppendArgumentDocumentation(argumentField, cmd, appSettingsDocumentation, true);
+                appSettingsDocumentation.AppendLine($"  -->");
+                var val = argumentField.Info.GetValue(cmd);
+                var str = StringValueOfSinleObjectOrArray(val, argumentField.IsSecret, argumentField.IsRestOfArguments);
+                var xmlEscaped = EscapeXmlSpecialSymbols(str);
+                if (!string.IsNullOrEmpty(commandName))
+                    appSettingsDocumentation.AppendLine($"  <add key=\"Cli.{commandName}.{argumentField.ArgumentName}\"");
+                else
+                    appSettingsDocumentation.AppendLine($"  <add key=\"Cli.{argumentField.ArgumentName}\"");
+                appSettingsDocumentation.AppendLine($"       value=\"{xmlEscaped}\"/>");
             }
             appSettingsDocumentation.AppendLine();
         }
@@ -1127,8 +1124,6 @@ namespace CliLib
             => ((argumentField.IsNamed && !string.IsNullOrEmpty(argumentField.ShortName)) || argumentField.IsPositional);
         private static bool IsArgumentFieldForLongNamedHelp(ArgumentField argumentField)
             => (argumentField.IsNamed && string.IsNullOrEmpty(argumentField.ShortName));
-        private static bool IsArgumentFieldForAppSettingsKeysHelp(ArgumentField argumentField)
-            => ((argumentField.IsNamed || argumentField.IsPositional || argumentField.IsAppSettings) && !argumentField.IsRequired);
         private static bool IsArgumentFieldForEnvironmentVarsHelp(ArgumentField argumentField)
             => (argumentField.IsEnvironmentVar && !argumentField.IsRequired);
 
