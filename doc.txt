@@ -1,0 +1,154 @@
+DESCRIPTION:
+
+A Single file CLI (Command Line Interface) library written in C#
+
+Supported features:
+
+1. Parsing command line and mapping them to public fields of the provided class(es)
+
+	i.e. arguments of program provided in command line 
+	
+		> prog.exe -f 123
+
+	maps to 
+
+		public class Prog 
+		{
+			[Cli.Named('f')]
+			public bool Flag = false;
+		
+			[Cli.Positional]
+			public int Number = 0;
+		}
+
+	So that command line parsing should looks like this:
+
+		Program p = new Prog();
+		Cli.ParseCommandLine(args, p);
+	
+	see Sample00_Simple project for the sample with example of using Cli.ParseCommandLine() method and enums parsing.
+
+	The supported data types are the following:
+	- any value based types supported automatic conversion from string via Convert.ChangeType(string, Type);
+	- the field with bool type is always considered as a flag that sets to true if provided w/o extra args; 
+	- additionally supported for reading DataTime via call
+		converted = DateTime.Parse(strArgValue, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal)
+	  and DataTimeOffset via
+        converted = DateTimeOffset.Parse(
+           strArgValue, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal);
+	  any enums via Enum.Parse(targetType, strArgValue, true) see sample Sample00_Simple 
+	  and System.IO.FileInfo and System.Net.IPHostEntry
+
+	- see Cli.ConvertArgumentStringToSingleObject() method for details
+
+2. Automatic validation through using Cli.AllowedRegexPattern and Cli.AllowedRange attributes
+
+        [Cli.AllowedRange(1001, 65535)]
+        public int Port = 1001;
+
+3. Use Subcommands of program through implementing interface Cli.ICommand and using method ICommand Cli.ParseCommandLine(String[] args, ICommand[] commands)
+
+4. Automatic documentation generation through support of using Cli.Doc attribute to annotate fields and classes and using methods Cli.PrintUsage() / Cli.PrintCommandUsage().
+   Additionally attributes Cli.SampleValue and Cli.GenerateSample helps generate reasonable samples in the output of Cli.PrintUsage();
+   For use Cli.AllowedRegexPattern and Cli.AllowedRange included in argument description of the generated documentation;
+
+		[Cli.Doc(@"The test program documentation goes here")]
+		[Cli.GenerateSample]
+		internal class Program
+		{
+			[Cli.Doc("Connecting to specific IP port")]
+			[Cli.SampleValue("5555")]
+			[Cli.AllowedRange(1001, 65535)]
+			public int Port = 0;
+
+		}
+
+		...
+
+        Cli.PrintUsage(program);
+
+5. Reading argument defaults from appSettings section of app.config (with support of cross refs via [[Cli.param]] annotation)
+
+	<?xml version="1.0" encoding="utf-8" ?>
+    <configuration>
+
+	<appSettings>
+		<add key="Cli.arg1"
+			 value="123"/>
+	    <!-- xref to Cli.arg1 -->
+		<add key="Cli.arg2"
+			 value="aaa[[Cli.arg1]]bbb"/>
+
+
+6. Reading argument value from environment variables through the using of Cli.EnvironmentVariable annotation attribute for field
+
+        [Cli.EnvironmentVariable("ENV_VAR")]
+        public string EnvVar1 = string.Empty;        
+
+7. Reading argumenty value from environment variables through the using of Cli.EnvironmentVariable annotation attribute for field
+
+        [Cli.EnvironmentVariable("ENV_VAR")]
+        public string EnvVar1 = string.Empty;        
+
+8. Basic support for secrets. The attribute Cli.Secret if applied prevent display of it's value in generated documentation and samples.
+   Also it turns reading of argument interactively into secret mode with masking user's input with stars
+
+        [Cli.Doc("Master key to decrypt secrets stored within configuration")]
+        [Cli.Interactive("Please enter master key", false)]
+        [Cli.Secret]
+        [Cli.Required]
+        public string MasterKey = string.Empty;     
+
+		...
+
+
+9. Embedded localization support through implementation of Cli.L10n interface within Cli.cs (no extra resources needed)
+
+
+TODO:
+
+1. print only interactive and appsettings arguments in the help output
+
+==
+C:\Users\andrey.larcev\Projects\CliLib2\Sample03_Interactive\bin\Debug>.\Sample03_Interactive.exe --help
+Command line provided:
+> Sample03_Interactive.exe --help
+Usage: > Sample03_Interactive.exe [-h|--help] | [-v|--version] | [--print-app-settings] | [args] [-A|--print-args]
+   - The test program to demo using interactive input and environment variables
+
+ [-A|--print-args]
+   - Print given arguments before execution
+   - the data type is [boolean]
+   - optional, default value is True
+
+==
+C:\Users\andrey.larcev\Projects\CliLib2\Sample03_Interactive\bin\Debug>.\Sample03_Interactive.exe --help
+Command line provided:
+> Sample03_Interactive.exe --help
+Usage: > Sample03_Interactive.exe [-h|--help] | [-v|--version] | [--print-app-settings] | [args] [-A|--print-args]
+   - The test program to demo using interactive input and environment variables
+
+ [-A|--print-args]
+   - Print given arguments before execution
+   - the data type is [boolean]
+   - optional, default value is True
+
+ master-key
+   - Master key to decrypt secrets stored within configuration
+   - requested interactively
+   - is required to provide
+   - could be passed via environment variable $MASTER_KEY
+   - the data type is [string]
+
+ connection-password 
+   - Master key to decrypt secrets stored within configuration
+   - Taken from appSettings/Cli.connection-password parameter of app.config
+   - is required to provide
+   - could be passed via environment variable $MASTER_KEY
+   - the data type is [string]
+
+
+==
+
+2. two
+3. three
