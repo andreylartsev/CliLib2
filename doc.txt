@@ -28,6 +28,25 @@ Supported features:
 	
 	see Sample00_Simple project for the sample with example of using Cli.ParseCommandLine() method and enums parsing.
 
+	Supported both named and positional parameters mapping. For reading named parameters apply Cli.Named attribute to the field but for reading positional parameters apply Cli.Positonal attribute
+
+	For named parameters, although you can specify argument name explicitly, the name of fields itself is considered as name of argument to search with command line arguments with a little translation of PascalCase to kebab-case.
+	That means the field value:
+
+		[Cli.Named]
+		public int PortNumber
+	
+	should be provided within command line arguments in the following way:
+
+		prog1.exe --port-number 123
+
+	For sure the extra attribute Cli.RestOfArguments for Cli.Positional supported:
+
+        [Cli.Positional]
+        [Cli.RestOfArguments]
+        [Cli.Required]
+        public FileInfo[] FileName = {}
+
 	The supported data types are the following:
 	- any value based types supported automatic conversion from string via Convert.ChangeType(string, Type);
 	- the field with bool type is always considered as a flag that sets to true if provided w/o extra args; 
