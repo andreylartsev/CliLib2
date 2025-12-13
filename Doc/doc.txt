@@ -76,6 +76,22 @@ In details:
            strArgValue, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal);
 	  any enums via Enum.Parse(targetType, strArgValue, true) see sample Sample00_Simple 
 	  and System.IO.FileInfo and System.Net.IPHostEntry
+	  and arrays, the values should be provided by coma separated string 
+	  
+        [Cli.Positional]
+        public int[] PortNumberToScan = {}
+	  
+
+		$ prog1.exe "443,8443,80,8080,8081"
+
+	  and even arrays of enums 
+
+	    public enum Option { First, Second };
+
+		[Cli.Positional]
+        public Option[] Options = {} 
+
+		$ prog1.exe "first,SECOND"
 
 	- see Cli.ConvertArgumentStringToSingleObject() method for details
 
