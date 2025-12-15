@@ -83,11 +83,11 @@ In details:
 	    [Cli.Named('A')]
 		public bool PrintAllDetails = false;
 
-		$prog1 -A 
+		$ prog1 -A 
 
 		or
 
-		$prog1 --print-all-details 
+		$ prog1 --print-all-details 
 	
 	- additionally supported for reading DataTime via call
 		converted = DateTime.Parse(strArgValue, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal)
@@ -115,7 +115,7 @@ In details:
         [Cli.RestOfArguments]
         public FileInfo[] FileName = { };
 
-		$prog1 ~/*.*
+		$ prog1 ~/*.*
 
 	  and arrays, the values should be provided by coma separated string 
 	  
