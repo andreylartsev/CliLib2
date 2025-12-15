@@ -695,7 +695,7 @@ namespace CliLib
 
         public enum ArgumentFieldTypes {
             NamedOrPositional = 1, AppSettings = 2, Interactive = 4, EnvironmentVar = 8,
-            ForCommandLineParsing = NamedOrPositional | AppSettings | EnvironmentVar, All = NamedOrPositional | AppSettings | Interactive | EnvironmentVar}
+            ForCommandLineParsing = NamedOrPositional | Interactive | AppSettings | EnvironmentVar, All = NamedOrPositional | AppSettings | Interactive | EnvironmentVar}
         private static List<ArgumentField> GetArgumentFields(
             Object obj,
             ArgumentFieldTypes opts = ArgumentFieldTypes.ForCommandLineParsing)
@@ -1126,11 +1126,13 @@ namespace CliLib
         }
 
         private static bool IsArgumentFieldForShortNamedAndPositionalHelp(ArgumentField argumentField)
-            => ((argumentField.IsNamed && !string.IsNullOrEmpty(argumentField.ShortName)) || argumentField.IsPositional);
+            => ((argumentField.IsNamed && !string.IsNullOrEmpty(argumentField.ShortName)) || argumentField.IsPositional || 
+            argumentField.IsInteractive || argumentField.IsEnvironmentVar || argumentField.IsAppSettings);
         private static bool IsArgumentFieldForLongNamedHelp(ArgumentField argumentField)
-            => (argumentField.IsNamed && string.IsNullOrEmpty(argumentField.ShortName));
+            => ((argumentField.IsNamed && string.IsNullOrEmpty(argumentField.ShortName)) || argumentField.IsPositional ||
+            argumentField.IsInteractive || argumentField.IsEnvironmentVar || argumentField.IsAppSettings);
         private static bool IsArgumentFieldForEnvironmentVarsHelp(ArgumentField argumentField)
-            => (argumentField.IsEnvironmentVar && !argumentField.IsRequired);
+            => (argumentField.IsEnvironmentVar);
 
         private static void AppendArgumentUsageToCommandLine(ArgumentField argumentField, StringBuilder commandLineBuilder)
         {
@@ -1250,6 +1252,12 @@ namespace CliLib
             {
                 builder.Append(docLinePrefix);
                 builder.AppendLine(L10n.includes_rest_of_commandline_arguments());
+            }
+
+            if (argumentField.IsInteractive)
+            {
+                builder.Append(docLinePrefix);
+                builder.AppendLine(L10n.Could_be_requested_interactively());
             }
 
             if (argumentField.IsEnvironmentVar)
@@ -2044,6 +2052,8 @@ namespace CliLib
             string Could_not_find_referenced_key_xrefName_in_appSettings_section_of_app_config(string xrefName);
             string Could_not_parse_value_of_environment_variable(string envVar, string message);
             string All_allowed_environment_variables();
+
+            string Could_be_requested_interactively();
             string Could_be_passed_via_environment_variable_envVar(string envVar);
             string The_value_is_a_secret();
             string CommandName_command_settings(string commandName);
@@ -2155,8 +2165,10 @@ namespace CliLib
                 => $"All allowed environment variables:";
             public string Could_be_passed_via_environment_variable_envVar(string envVar)
                 => $"   - could be passed via environment variable ${envVar}";
+            public string Could_be_requested_interactively()
+                => $"   - could be requested interactively";
             public string The_value_is_a_secret()
-                => "   - the value is a secret";
+                => $"   - the value is a secret";
             public string CommandName_command_settings(string commandName)
                 => $"{commandName} command settings";
             public string Program_settings()
@@ -2266,6 +2278,8 @@ namespace CliLib
                 => $"Допустимые переменные среды окружения:";
             public string Could_be_passed_via_environment_variable_envVar(string envVar)
                 => $"   - может быть передан через переменную среды окружения: ${envVar}";
+            public string Could_be_requested_interactively()
+                => $"   - может быть запрошен интерактивно";
             public string The_value_is_a_secret()
                 => "   - значение является секретом";
             public string CommandName_command_settings(string commandName)

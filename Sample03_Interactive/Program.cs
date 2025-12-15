@@ -21,7 +21,6 @@ namespace Sample03_Interactive
         public string MasterKey = string.Empty;
 
         [Cli.Doc("Connection password stored within app.config")]
-        [Cli.EnvironmentVariable]
         [Cli.AppSettings]
         [Cli.Secret]
         [Cli.Required]
@@ -33,9 +32,17 @@ namespace Sample03_Interactive
                 Cli.PrintArgs(this);
 
             Console.WriteLine("Now you would see results of decryption of the password stored within app.config.");
-            Cli.AskIfUserWantedContinue("Would you like to continue?", "Yes", "No");
-            var decrypted = ImitationOfDecryption(this.ConnectionPassword, this.MasterKey);
-            Console.WriteLine($"Original masterKey={this.MasterKey}, and connectionPassword={this.ConnectionPassword}, decrypted={decrypted}");
+            try
+            {
+                Cli.AskIfUserWantedContinue("Would you like to continue?", "Yes", "No");
+
+                var decrypted = ImitationOfDecryption(this.ConnectionPassword, this.MasterKey);
+                Console.WriteLine($"Original masterKey={this.MasterKey}, and connectionPassword={this.ConnectionPassword}, decrypted={decrypted}");
+            }
+            catch (Cli.UserInterruptedInputException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
         }
 
         public static string ImitationOfDecryption(string connectionPassword, string masterKey)
