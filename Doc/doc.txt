@@ -69,14 +69,54 @@ In details:
 
 	The supported data types are the following:
 	- any value based types supported automatic conversion from string via Convert.ChangeType(string, Type);
-	- the field with bool type is always considered as a flag that sets to true if provided w/o extra args; 
+
+		[Cli.Named]
+		public uint One = 1;
+
+		[Cli.Named]
+		public double Two = 2.0;
+
+		$ prog1 --one 1 --two 2.5 
+
+	- the field with bool type is always considered as a flag that sets to true if provided w/o extra args i.e.
+
+	    [Cli.Named('A')]
+		public bool PrintAllDetails = false;
+
+		$prog1 -A 
+
+		or
+
+		$prog1 --print-all-details 
+	
 	- additionally supported for reading DataTime via call
 		converted = DateTime.Parse(strArgValue, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal)
+
 	  and DataTimeOffset via
         converted = DateTimeOffset.Parse(
            strArgValue, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces | DateTimeStyles.AssumeLocal);
+
+		[Cli.Named]
+		public DataTimeOffset LastUpdateDate = DateTimeOffset.UtcNow;
+
+		$ prog1 --last-update-time '2005-01-01T10:00:00Z'
+
+
 	  any enums via Enum.Parse(targetType, strArgValue, true) see sample Sample00_Simple 
+
+	    [Cli.Named('O')]
+        public Option Option = Option.First;
+
+		$ ./prog1.exe -O Second
+
 	  and System.IO.FileInfo and System.Net.IPHostEntry
+
+        [Cli.Positional]
+        [Cli.RestOfArguments]
+        public FileInfo[] FileName = { };
+
+		$prog1 ~/*.*
+
 	  and arrays, the values should be provided by coma separated string 
 	  
         [Cli.Positional]

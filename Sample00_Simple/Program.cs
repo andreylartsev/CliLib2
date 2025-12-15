@@ -15,6 +15,15 @@ namespace Sample00_Simple
         [Cli.Named('O')]
         public Option Option = Option.First;
 
+        [Cli.Named]
+        public uint One = 1;
+
+        [Cli.Named]
+        public double Two = 2.0;
+
+        [Cli.Named]
+        public DateTimeOffset LastUpdateTime = DateTimeOffset.UtcNow;
+
         public static void Main(string[] args)
         {
             try
