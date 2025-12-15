@@ -262,16 +262,43 @@ namespace CliLib
 
             // read arguments from appSettings
             ReadArgumentsFromAppSettings(obj, allFields, true);
-            // commit everything to the target so they are sort of new defaults now
-            CommitAllNewValues(obj, allFields);
 
-            // re-read all arguments
-            allFields =
-                GetArgumentFields(obj, ArgumentFieldTypes.All);
-
-            // read arguments from environment variables
             ReadArgumentsFromEnvironmentVariables(obj, allFields, true);
 
+            ReadArgumentsFromCommandLine(args, obj, allFields);
+
+            ReadArgumentsInteractively(obj, allFields);
+
+            // cross check
+            foreach (var field in allFields)
+            {
+                // make sure that all of the fields with required flag have got new value
+                if (field.IsRequired && field.NewValue == null)
+                {
+                    if (field.IsPositional)
+                        throw new ArgumentParseException(L10n.The_argument_with_index_must_be_provided(field.ArgumentName, field.PositionIndex + 1), obj);
+                    else // anything else
+                        throw new ArgumentParseException(L10n.The_argument_name_must_be_provided(field.ArgumentName), obj);
+                }
+            }
+
+            // assign all new non-null values
+            CommitAllNewValues(obj, allFields);
+        }
+
+        private static void ReadArgumentsInteractively(object obj, List<ArgumentField> allFields)
+        {
+            foreach (var field in allFields)
+            {
+                if (field.IsInteractive && field.IsRequired && field.NewValue == null)
+                {
+                    AskUserForInput(obj, field.Info.Name);
+                }
+            }
+        }
+
+        private static void ReadArgumentsFromCommandLine(string[] args, object obj, List<ArgumentField> allFields)
+        {
             int positionalArgumentIndex = 0;
             for (int index = 0; index < args.Length; index++)
             {
@@ -347,28 +374,6 @@ namespace CliLib
                     }
                 }
             }
-
-            // cross check
-            foreach (var field in allFields)
-            {
-                // make sure that all of the fields with required flag have got new value
-                if (field.IsRequired && field.NewValue == null)
-                {
-                    if (field.IsInteractive)
-                    {
-                        AskUserForInput(obj, field.Info.Name);
-                    }
-                    else if (field.IsNamed)
-                        throw new ArgumentParseException(L10n.The_argument_name_must_be_provided(field.ArgumentName), obj);
-                    else if (field.IsPositional)
-                        throw new ArgumentParseException(L10n.The_argument_with_index_must_be_provided(field.ArgumentName, field.PositionIndex + 1), obj);
-                    else // anything else
-                        throw new ArgumentParseException(L10n.The_argument_name_must_be_provided(field.ArgumentName), obj);
-                }
-            }
-
-            // assign all new non-null values
-            CommitAllNewValues(obj, allFields);
         }
 
         private static void ApplyAllValidationsIfPossible(Object obj, ArgumentField argumentField, string strArgValue)

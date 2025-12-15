@@ -182,6 +182,7 @@ In details:
 
         [Cli.Interactive("Please enter master key", false)]
         [Cli.Required]
+        [Cli.Secret]
         public string MasterKey = string.Empty;
 
 		This argument will be requested automatically during Cli.ParseCommandLine()
@@ -203,9 +204,8 @@ In details:
 
 		$ MASTER_KEY=password123 mono prog1.exe
 
-8. Basic support for secrets. The attribute Cli.Secret if applied prevent display of it's value in generated documentation and samples.
-   Also it turns reading of argument interactively into secret mode with masking user's input with stars
-
+8. Basic support for secrets. The attribute Cli.Secret if applied prevents displaying of it's value in generated documentation, samples and in the interactive communication.
+   
         [Cli.Doc("Master key to decrypt secrets stored within configuration")]
         [Cli.Interactive("Please enter master key", false)]
         [Cli.Secret]

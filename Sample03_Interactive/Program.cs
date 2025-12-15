@@ -21,8 +21,10 @@ namespace Sample03_Interactive
         public string MasterKey = string.Empty;
 
         [Cli.Doc("Connection password stored within app.config")]
+        [Cli.EnvironmentVariable]
         [Cli.AppSettings]
         [Cli.Secret]
+        [Cli.Required]
         public string ConnectionPassword = "123";
 
         public void Exec()
