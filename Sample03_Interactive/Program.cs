@@ -7,17 +7,20 @@ namespace Sample03_Interactive
 {
 
     [Cli.Doc(@"The test program to demo using interactive input and environment variables")]
+    [Cli.GenerateSample]
     internal class Program : Cli.IExecutable
     {
         [Cli.Doc("Print given arguments before execution")]
         [Cli.Named('A')]
+        [Cli.SampleValue]
         public bool PrintArgs = false;
         
-        [Cli.Doc("Master key to decrypt secrets stored within configuration")]
+        [Cli.Doc("Master key to decrypt secrets that stored within app.config")]
         [Cli.Interactive("Please enter master key", false)]
         [Cli.EnvironmentVariable("MASTER_KEY")]
         [Cli.Secret]
         [Cli.Required]
+        [Cli.AllowedRegexPattern("^.{8,}$")]
         public string MasterKey = string.Empty;
 
         [Cli.Doc("Connection password stored within app.config")]

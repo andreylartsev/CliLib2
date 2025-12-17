@@ -10,6 +10,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
+using static CliLib.Cli;
 
 namespace CliLib
 {
@@ -694,11 +695,10 @@ namespace CliLib
         }
 
         public enum ArgumentFieldTypes {
-            NamedOrPositional = 1, AppSettings = 2, Interactive = 4, EnvironmentVar = 8,
-            ForCommandLineParsing = NamedOrPositional | Interactive | AppSettings | EnvironmentVar, All = NamedOrPositional | AppSettings | Interactive | EnvironmentVar}
+            NamedOrPositional = 1, AppSettings = 2, Interactive = 4, EnvironmentVar = 8, All = NamedOrPositional | AppSettings | Interactive | EnvironmentVar}
         private static List<ArgumentField> GetArgumentFields(
             Object obj,
-            ArgumentFieldTypes opts = ArgumentFieldTypes.ForCommandLineParsing)
+            ArgumentFieldTypes opts = ArgumentFieldTypes.All)
         {
             if (obj == null)
                 throw new ArgumentNullException("obj");
@@ -834,11 +834,8 @@ namespace CliLib
         }
 
         public enum HelpType { 
-            ShortNamedAndPositionalArguments = 1, 
-            LongNamedArguments = 2, 
-            EnvironmentVariables = 8, 
-            Quick = ShortNamedAndPositionalArguments,
-            Full = ShortNamedAndPositionalArguments | LongNamedArguments | EnvironmentVariables
+            Quick,
+            Full
         };
 
         public static void PrintUsage(Object programObj, HelpType helpType = HelpType.Full)
@@ -848,44 +845,36 @@ namespace CliLib
 
             var programName = System.AppDomain.CurrentDomain.FriendlyName;
 
-            var argumentFields = GetArgumentFields(programObj, ArgumentFieldTypes.ForCommandLineParsing);
-            try
-            {
-                ReadArgumentsFromAppSettings(programObj, argumentFields, false);
-                ReadArgumentsFromEnvironmentVariables(programObj, argumentFields, true);
-                CommitAllNewValues(programObj, argumentFields);
-            }
-            catch (ArgumentParseException)
-            {
-                // TODO: inform user that some value from appsettings are not readable
-            }
+            var argumentFields = GetArgumentFields(programObj, ArgumentFieldTypes.All);
 
             StringBuilder commandLineUsage = new StringBuilder();
             commandLineUsage.Append(L10n.Usage_program(PlatformDependentCommandLineInvitation, programName));
 
             StringBuilder argumentDocumentation = new StringBuilder();
+
             foreach (var argumentField in argumentFields)
             {
 
-                if (((helpType & HelpType.ShortNamedAndPositionalArguments) > 0)
-                    && IsArgumentFieldForShortNamedAndPositionalHelp(argumentField))
+                if (helpType == HelpType.Quick)
                 {
-                    AppendArgumentUsageToCommandLine(argumentField, commandLineUsage);
+                    if (IsArgumentFieldShortNamedOrPositional(argumentField))
+                    {
+                        AppendArgumentUsageToCommandLine(argumentField, commandLineUsage);
+                        AppendArgumentDocumentation(argumentField, programObj, argumentDocumentation);
+                    }
+                    else if (argumentField.IsRequired)
+                    {
+                        AppendArgumentDocumentation(argumentField, programObj, argumentDocumentation);
+                    }
+                }
+                else // Full
+                {
+                    if (IsArgumentFieldAnyNamedOrPositional(argumentField))
+                    {
+                        AppendArgumentUsageToCommandLine(argumentField, commandLineUsage);
+                    }
                     AppendArgumentDocumentation(argumentField, programObj, argumentDocumentation);
                 }
-                else if (((helpType & HelpType.LongNamedArguments) > 0)
-                    && IsArgumentFieldForLongNamedHelp(argumentField))
-                {
-                    AppendArgumentUsageToCommandLine(argumentField, commandLineUsage);
-                    AppendArgumentDocumentation(argumentField, programObj, argumentDocumentation);
-                }
-                else if (((helpType & HelpType.EnvironmentVariables) > 0)
-                    && IsArgumentFieldForEnvironmentVarsHelp(argumentField))
-                {
-                    AppendArgumentUsageToCommandLine(argumentField, commandLineUsage);
-                    AppendArgumentDocumentation(argumentField, programObj, argumentDocumentation);
-                }
-
             }
 
             commandLineUsage.AppendLine();
@@ -933,56 +922,33 @@ namespace CliLib
             var programName = System.AppDomain.CurrentDomain.FriendlyName;
             var commandName = cmd.CommandName;
 
-            var argumentFields = GetArgumentFields(cmd, ArgumentFieldTypes.ForCommandLineParsing | ArgumentFieldTypes.Interactive);
-            try
-            {
-                ReadArgumentsFromAppSettings(cmd, argumentFields, false);
-                ReadArgumentsFromEnvironmentVariables(cmd, argumentFields, false);
-                CommitAllNewValues(cmd, argumentFields);
-            }
-            catch (ArgumentParseException)
-            {
-            }
+            var argumentFields = GetArgumentFields(cmd, ArgumentFieldTypes.All);
 
             StringBuilder commandLineUsage = new StringBuilder();
             commandLineUsage.Append(L10n.Usage_command(PlatformDependentCommandLineInvitation, programName, commandName));
             StringBuilder argumentDocumentation = new StringBuilder();
-            StringBuilder envVarsDocumentation = new StringBuilder();
             foreach (var argumentField in argumentFields)
             {
-                if (argumentField.IsNamed || argumentField.IsPositional)
+
+                if (helpType == HelpType.Quick)
                 {
-                    if (((helpType & HelpType.ShortNamedAndPositionalArguments) > 0)
-                        && IsArgumentFieldForShortNamedAndPositionalHelp(argumentField))
+                    if (IsArgumentFieldShortNamedOrPositional(argumentField))
                     {
                         AppendArgumentUsageToCommandLine(argumentField, commandLineUsage);
                         AppendArgumentDocumentation(argumentField, cmd, argumentDocumentation);
                     }
-                    else if (((helpType & HelpType.LongNamedArguments) > 0)
-                        && IsArgumentFieldForLongNamedHelp(argumentField))
+                    else if (argumentField.IsRequired)
                     {
-                        AppendArgumentUsageToCommandLine(argumentField, commandLineUsage);
-                        AppendArgumentDocumentation(argumentField, cmd, argumentDocumentation);
-                    }
-                    else if (((helpType & HelpType.EnvironmentVariables) > 0)
-                        && IsArgumentFieldForEnvironmentVarsHelp(argumentField))
-                    {
-                        AppendArgumentUsageToCommandLine(argumentField, commandLineUsage);
                         AppendArgumentDocumentation(argumentField, cmd, argumentDocumentation);
                     }
                 }
-
-                if (((helpType & HelpType.EnvironmentVariables) > 0)
-                        && IsArgumentFieldForEnvironmentVarsHelp(argumentField))
+                else // Full
                 {
-                    if (TryGetArgumentDocumentation(argumentField.Info, out var documentation))
-                        envVarsDocumentation.AppendLine($"#   - {documentation}");
-                    AppendArgumentDocumentation(argumentField, cmd, envVarsDocumentation, true, "#");
-                    var envVar = argumentField.EnvironmentVar;
-                    var val = argumentField.Info.GetValue(cmd);
-                    var str = StringValueOfSinleObjectOrArray(val, argumentField.IsSecret, argumentField.IsRestOfArguments);
-                    envVarsDocumentation.AppendLine($"export {envVar}=\"{str}\";");
-
+                    if (IsArgumentFieldAnyNamedOrPositional(argumentField))
+                    {
+                        AppendArgumentUsageToCommandLine(argumentField, commandLineUsage);
+                    }
+                    AppendArgumentDocumentation(argumentField, cmd, argumentDocumentation);
                 }
             }
             commandLineUsage.AppendLine();
@@ -995,12 +961,6 @@ namespace CliLib
 
             Console.WriteLine(commandLineUsage.ToString());
             Console.WriteLine(argumentDocumentation.ToString());
-
-            if (envVarsDocumentation.Length > 0)
-            {
-                Console.WriteLine(L10n.All_allowed_environment_variables());
-                Console.WriteLine(envVarsDocumentation.ToString());
-            }
 
         }
 
@@ -1102,37 +1062,35 @@ namespace CliLib
             var isDefault = GetIfAttributeTypeIsPresent(command, typeof(DefaultCommandAttribute));
             builder.Append($"  {(isDefault ? "*" : "")}{commandName} [-h|--help] ");
 
-            foreach (var argumentField in GetArgumentFields(command, ArgumentFieldTypes.NamedOrPositional))
+            var argumentFields = GetArgumentFields(command, ArgumentFieldTypes.All);
+            foreach (var argumentField in argumentFields)
             {
-                if (((helpType & HelpType.ShortNamedAndPositionalArguments) > 0)
-                    && IsArgumentFieldForShortNamedAndPositionalHelp(argumentField))
-                {
-                    AppendArgumentUsageToCommandLine(argumentField, builder);
-                }
-                else if (((helpType & HelpType.LongNamedArguments) > 0) 
-                    && IsArgumentFieldForLongNamedHelp(argumentField))
-                {
-                    AppendArgumentUsageToCommandLine(argumentField, builder);
-                }
-                else if (((helpType & HelpType.EnvironmentVariables) > 0)
-                    && IsArgumentFieldForEnvironmentVarsHelp(argumentField))
-                {
-                    AppendArgumentUsageToCommandLine(argumentField, builder);
-                }
 
+                if (helpType == HelpType.Quick)
+                {
+                    if (IsArgumentFieldShortNamedOrPositional(argumentField))
+                    {
+                        AppendArgumentUsageToCommandLine(argumentField, builder);
+                        AppendArgumentDocumentation(argumentField, command, builder);
+                    }
+                }
+                else // Full
+                {
+                    if (IsArgumentFieldAnyNamedOrPositional(argumentField))
+                    {
+                        AppendArgumentUsageToCommandLine(argumentField, builder);
+                    }
+                }
             }
+
             builder.AppendLine();
             AppendCommandDocumentation(programName, commandName, command, builder);
         }
 
-        private static bool IsArgumentFieldForShortNamedAndPositionalHelp(ArgumentField argumentField)
-            => ((argumentField.IsNamed && !string.IsNullOrEmpty(argumentField.ShortName)) || argumentField.IsPositional || 
-            argumentField.IsInteractive || argumentField.IsEnvironmentVar || argumentField.IsAppSettings);
-        private static bool IsArgumentFieldForLongNamedHelp(ArgumentField argumentField)
-            => ((argumentField.IsNamed && string.IsNullOrEmpty(argumentField.ShortName)) || argumentField.IsPositional ||
-            argumentField.IsInteractive || argumentField.IsEnvironmentVar || argumentField.IsAppSettings);
-        private static bool IsArgumentFieldForEnvironmentVarsHelp(ArgumentField argumentField)
-            => (argumentField.IsEnvironmentVar);
+        private static bool IsArgumentFieldShortNamedOrPositional(ArgumentField argumentField)
+            => ((argumentField.IsNamed && !string.IsNullOrEmpty(argumentField.ShortName)) || argumentField.IsPositional);
+        private static bool IsArgumentFieldAnyNamedOrPositional(ArgumentField argumentField)
+            => (argumentField.IsNamed || argumentField.IsPositional);
 
         private static void AppendArgumentUsageToCommandLine(ArgumentField argumentField, StringBuilder commandLineBuilder)
         {
@@ -1162,7 +1120,7 @@ namespace CliLib
                     }
                 }
             }
-            else
+            else if (argumentField.IsPositional)
             {
                 if (argumentField.IsRestOfArguments)
                 {
@@ -1172,6 +1130,18 @@ namespace CliLib
                 {
                     AppendArgumentWithRequiredFlag($"{argumentField.ArgumentName}", argumentField.IsRequired, commandLineBuilder);
                 }
+            }
+            else if (argumentField.IsInteractive)
+            {
+                commandLineBuilder.Append($"({argumentField.ArgumentName})> ");
+            }
+            else if (argumentField.IsAppSettings)
+            {
+                commandLineBuilder.Append($"appSettings/Cli.*.{argumentField.ArgumentName}");
+            }
+            else if (argumentField.IsEnvironmentVar)
+            {
+                commandLineBuilder.Append($"${argumentField.EnvironmentVar}");
             }
         }
 
@@ -1216,6 +1186,20 @@ namespace CliLib
                 builder.AppendLine(L10n.the_data_type_is_(argumentField.Info.FieldType.Name));
             }
 
+
+            if (argumentField.IsRequired)
+            {
+                builder.Append(docLinePrefix);
+                builder.AppendLine(L10n.is_required_to_provide());
+            }
+            else
+            {
+                var val = argumentField.Info.GetValue(obj);
+                var str = StringValueOfSinleObjectOrArray(val, argumentField.IsSecret, argumentField.IsRestOfArguments);
+                builder.Append(docLinePrefix);
+                builder.AppendLine(L10n.default_value_is(str));
+            }
+
             if (TryGetArgumentValidationRange(argumentField.Info, out int minVal, out int maxVal))
             {
                 builder.Append(docLinePrefix);
@@ -1233,19 +1217,6 @@ namespace CliLib
                 var str = StringValueOfSinleObjectOrArray(sampleValue, argumentField.IsSecret, argumentField.IsRestOfArguments);
                 builder.Append(docLinePrefix);
                 builder.AppendLine(L10n.sample_value_is(str));
-            }
-
-            if (argumentField.IsRequired)
-            {
-                builder.Append(docLinePrefix);
-                builder.AppendLine(L10n.is_required_to_provide());
-            }
-            else
-            {
-                var val = argumentField.Info.GetValue(obj);
-                var str = StringValueOfSinleObjectOrArray(val, argumentField.IsSecret, argumentField.IsRestOfArguments);
-                builder.Append(docLinePrefix);
-                builder.AppendLine(L10n.default_value_is(str));
             }
 
             if (argumentField.IsRestOfArguments)
@@ -1271,6 +1242,18 @@ namespace CliLib
                 builder.Append(docLinePrefix);
                 builder.AppendLine(L10n.The_value_is_a_secret());
             }
+
+            if (IsArgumentFieldAppSettingsOnly(argumentField))
+            {
+                builder.Append(docLinePrefix);
+                builder.AppendLine(L10n.Could_be_specified_in_app_config_appSettings());
+            }
+
+        }
+
+        private static bool IsArgumentFieldAppSettingsOnly(ArgumentField argumentField)
+        {
+            return !(argumentField.IsNamed || argumentField.IsPositional || argumentField.IsEnvironmentVar || argumentField.IsInteractive) && argumentField.IsAppSettings;
         }
 
         private static string MinRangeBoundaryText(int boundary)
@@ -2055,6 +2038,7 @@ namespace CliLib
 
             string Could_be_requested_interactively();
             string Could_be_passed_via_environment_variable_envVar(string envVar);
+            string Could_be_specified_in_app_config_appSettings();
             string The_value_is_a_secret();
             string CommandName_command_settings(string commandName);
             string Program_settings();
@@ -2138,7 +2122,7 @@ namespace CliLib
             public string allowed_regex_pattern_is_pattern(string pattern)
                 => $"   - allowed regex pattern is \"{pattern}\"";
             public string is_required_to_provide()
-                => $"   - is required to provide";
+                => $"   - is required to provide!";
             public string default_value_is(string str)
                 => $"   - optional, default value is {str}";
             public string sample_value_is(string str)
@@ -2165,6 +2149,8 @@ namespace CliLib
                 => $"All allowed environment variables:";
             public string Could_be_passed_via_environment_variable_envVar(string envVar)
                 => $"   - could be passed via environment variable ${envVar}";
+            public string Could_be_specified_in_app_config_appSettings()
+                => $"   - could be specified in app.config / appSettings";
             public string Could_be_requested_interactively()
                 => $"   - could be requested interactively";
             public string The_value_is_a_secret()
@@ -2251,7 +2237,7 @@ namespace CliLib
             public string allowed_regex_pattern_is_pattern(string pattern)
                 => $"   - значение ограничено регулярным выражением \"{pattern}\"";
             public string is_required_to_provide()
-                => $"   - обязательный";
+                => $"   - является обязательным!";
             public string default_value_is(string str)
                 => $"   - необязательный, значение по умолчанию {str}";
             public string sample_value_is(string str)
@@ -2278,6 +2264,9 @@ namespace CliLib
                 => $"Допустимые переменные среды окружения:";
             public string Could_be_passed_via_environment_variable_envVar(string envVar)
                 => $"   - может быть передан через переменную среды окружения: ${envVar}";
+            public string Could_be_specified_in_app_config_appSettings()
+                => $"   - может быть указан в секции appSettings конфигурационного файла app.config";
+
             public string Could_be_requested_interactively()
                 => $"   - может быть запрошен интерактивно";
             public string The_value_is_a_secret()
