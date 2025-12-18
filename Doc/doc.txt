@@ -260,45 +260,38 @@ through using Cli.AllowedRegexPattern and Cli.AllowedRange attributes
 
 TODO:
 
+3. Support reading argument values from the binary or text file with parameters path and maximum file size i.e.
+
+	[Cli.FileContent("/var/secrets/private_key.der", 65535)]
+	public MemoryStream PrivateKey;
+
 2. [v] use nameof(param) instead of explicitly written string in argument of ArgumentNullException();
 
-1. Print only interactive and appsettings arguments in the help output
+1. [v] Print only interactive and appsettings arguments in the help output
 
-==
-C:\Users\andrey.larcev\Projects\CliLib2\Sample03_Interactive\bin\Debug>.\Sample03_Interactive.exe --help
+PS C:\Users\andrey.larcev\Projects\CliLib2\Sample03_Interactive\bin\Debug> .\Sample03_Interactive.exe -h
 Command line provided:
-> Sample03_Interactive.exe --help
+> Sample03_Interactive.exe -h
 Usage: > Sample03_Interactive.exe [-h|--help] | [-v|--version] | [--print-app-settings] | [args] [-A|--print-args]
    - The test program to demo using interactive input and environment variables
+Sample: > Sample03_Interactive.exe
+
 
  [-A|--print-args]
    - Print given arguments before execution
    - the data type is [boolean]
-   - optional, default value is True
-
-==
-C:\Users\andrey.larcev\Projects\CliLib2\Sample03_Interactive\bin\Debug>.\Sample03_Interactive.exe --help
-Command line provided:
-> Sample03_Interactive.exe --help
-Usage: > Sample03_Interactive.exe [-h|--help] | [-v|--version] | [--print-app-settings] | [args] [-A|--print-args]
-   - The test program to demo using interactive input and environment variables
-
- [-A|--print-args]
-   - Print given arguments before execution
-   - the data type is [boolean]
-   - optional, default value is True
-
- master-key
-   - Master key to decrypt secrets stored within configuration
-   - requested interactively
-   - is required to provide
-   - could be passed via environment variable $MASTER_KEY
+   - optional, default value is False
+ (master-key)>
+   - Master key to decrypt secrets that stored within app.config
    - the data type is [string]
-
- connection-password 
-   - Master key to decrypt secrets stored within configuration
-   - Taken from appSettings/Cli.connection-password parameter of app.config
-   - is required to provide
+   - is required to provide!
+   - allowed regex pattern is "^.{8,}$"
+   - could be requested interactively
    - could be passed via environment variable $MASTER_KEY
+   - the value is a secret
+ appSettings/Cli.*.connection-password
+   - Connection password stored within app.config
    - the data type is [string]
-
+   - is required to provide!
+   - the value is a secret
+   - could be specified in app.config / appSettings
