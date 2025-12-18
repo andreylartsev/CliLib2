@@ -19,10 +19,10 @@ namespace CliLib
         public static ICommand ParseCommandLine(String[] args, ICommand[] commands)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             if (commands == null)
-                throw new ArgumentNullException("commands");
+                throw new ArgumentNullException(nameof(commands));
 
             if (args.Length == 1 && (args[0] == "-h" || args[0] == "--help"))
             {
@@ -76,7 +76,7 @@ namespace CliLib
         public static void ParseCommandLine(String[] args, Object program)
         {
             if (program == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(program));
 
             if (args.Length == 1 && (args[0] == "-h" || args[0] == "--help"))
             {
@@ -103,9 +103,9 @@ namespace CliLib
         public static void AskUserForInput(Object obj, string fieldName)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
             if (fieldName == null)
-                throw new ArgumentNullException("fieldName");
+                throw new ArgumentNullException(nameof(fieldName));
 
             var allFields = GetArgumentFields(obj, ArgumentFieldTypes.Interactive);
             ArgumentField argumentField = GetArgumentFieldByFieldName(obj, allFields, fieldName);
@@ -219,11 +219,11 @@ namespace CliLib
         public static void ChangeValue(Object obj, string fieldName, string strNewValue)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
             if (fieldName == null)
-                throw new ArgumentNullException("fieldName");
+                throw new ArgumentNullException(nameof(fieldName));
             if (strNewValue == null)
-                throw new ArgumentNullException("strNewValue");
+                throw new ArgumentNullException(nameof(strNewValue));
 
             var allFields = GetArgumentFields(obj, ArgumentFieldTypes.All);
             ArgumentField argumentField = GetArgumentFieldByFieldName(obj, allFields, fieldName);
@@ -252,10 +252,10 @@ namespace CliLib
         private static void ParseArgumentFields(String[] args, Object obj)
         {
             if (args == null)
-                throw new ArgumentNullException("args");
+                throw new ArgumentNullException(nameof(args));
 
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
 
             // read all arguments 
             var allFields =
@@ -481,7 +481,7 @@ namespace CliLib
         {
 #pragma warning disable CS0618
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
 
             if (obj is ICommand)
             {
@@ -701,7 +701,7 @@ namespace CliLib
             ArgumentFieldTypes opts = ArgumentFieldTypes.All)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
 
             var result = new List<ArgumentField>();
             int nextPositionalArgumentIndex = 0;
@@ -819,7 +819,7 @@ namespace CliLib
         public static void PrintCommandLine(string[] args)
         {
             if (args == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(args));
 
             var programName = System.AppDomain.CurrentDomain.FriendlyName;
 
@@ -841,7 +841,7 @@ namespace CliLib
         public static void PrintUsage(Object programObj, HelpType helpType = HelpType.Full)
         {
             if (programObj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(programObj));
 
             var programName = System.AppDomain.CurrentDomain.FriendlyName;
 
@@ -894,7 +894,7 @@ namespace CliLib
         public static void PrintUsage(Object programObj, ICommand[] commands, HelpType helpType = HelpType.Full)
         {
             if (commands == null)
-                throw new ArgumentNullException("commands");
+                throw new ArgumentNullException(nameof(commands));
 
             var programName = System.AppDomain.CurrentDomain.FriendlyName;
 
@@ -917,7 +917,7 @@ namespace CliLib
         public static void PrintCommandUsage(ICommand cmd, HelpType helpType = HelpType.Full)
         {
             if (cmd == null)
-                throw new ArgumentNullException("cmd");
+                throw new ArgumentNullException(nameof(cmd));
 
             var programName = System.AppDomain.CurrentDomain.FriendlyName;
             var commandName = cmd.CommandName;
@@ -967,7 +967,7 @@ namespace CliLib
         public static void PrintAppSettings(Object programObj, ICommand[] commands = null)
         {
             if (programObj == null)
-                throw new ArgumentNullException("programObj");
+                throw new ArgumentNullException(nameof(programObj));
 
             StringBuilder appSettingsBuilder = new StringBuilder();
 
@@ -1377,7 +1377,7 @@ namespace CliLib
 
 
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
 
             foreach (var attr in obj.GetType().CustomAttributes)
             {
@@ -1480,7 +1480,7 @@ namespace CliLib
             ArgumentFieldTypes fieldTypes = ArgumentFieldTypes.All)
         {
             if (obj == null)
-                throw new ArgumentNullException("obj");
+                throw new ArgumentNullException(nameof(obj));
 
             StringBuilder builder = new StringBuilder();
             if ((opts & PrintArgOpts.ShowHeader) > 0)

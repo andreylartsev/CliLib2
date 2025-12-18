@@ -260,7 +260,7 @@ through using Cli.AllowedRegexPattern and Cli.AllowedRange attributes
 
 TODO:
 
-2. TBD
+2. [v] use nameof(param) instead of explicitly written string in argument of ArgumentNullException();
 
 1. Print only interactive and appsettings arguments in the help output
 
