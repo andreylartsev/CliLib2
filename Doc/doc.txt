@@ -1,22 +1,23 @@
 DESCRIPTION:
 
 A single file CLI (Command Line Interface) library, similar to picocli but written in C#.
+The key idea of a library is a replacement of imperative programming with a declarative one with help of using attribute annotations and reflection.
+Where possible used the approach to use the single information source for multiple purposes i.e. 
+use class field names to generate command line parameter names, 
+environment variable names,  parameters names within app.config, generate embeded app documentaton etc.
 The focus is on wider compatibility and minimization of external dependencies.
-The key part of functionality is replacement of imperative programming with a declarative one using attribute annotations.
-Ability use the same source i.e. attribute annotations on the fields and classes to parse the command line and generate documentation for program.
-Where possible used the approach to use the single information source for multiple purposes i.e. generate parameter names from the field names. 
 
 Supported features:
 
 1. Parsing command line arguments, supported both named and positional parameters;
-2. Parameter validation, supported mandatory presence, allowed range check and regex patterns;
+2. Parameter validation, supported mandatory presence, numbers range check and regex patterns check;
 3. Use Subcommands of a program;
-4. Automatic program documentation generation;
+4. Program documentation generation (i.e. embeded help)
 5. Reading parameter defaults from appSettings (yes, I know that appSettings is deprecated);
-6. Request missing or special parameters interactively;
-7. Reading parameters from environment variables;
+6. Reading parameters from environment variables;
+7. Request missing or special/secret parameters interactively;
 8. Basic support for secret parameters that could be passed to program either via environment variable or interactively and it's value never appears in the program output like help generation.
-9. Embedded localization support through implementation of Cli.L10n interface;
+9. Embedded localization support through implementation of Cli.LocalizedLitteralls interface;
 10. Syntax sugar to simplify Main() method implementation using SimpleCommandLine / MultiCommandLine classes.
 
 
@@ -68,7 +69,7 @@ In details:
 		$ prog1.exe ~/*.txt
 
 	The supported data types are the following:
-	- any value based types supported automatic conversion from string via Convert.ChangeType(string, Type);
+	- any value based types supported by automatic conversion from string via Convert.ChangeType(string, Type);
 
 		[Cli.Named]
 		public uint One = 1;
@@ -78,14 +79,14 @@ In details:
 
 		$ prog1 --one 1 --two 2.5 
 
-	- the field with bool type is always considered as a flag that sets to true if provided w/o extra args i.e.
+	- the field with bool type is always considered as a flag that sets to true if provided in command line w/o extra args i.e.:
 
 	    [Cli.Named('A')]
 		public bool PrintAllDetails = false;
 
 		$ prog1 -A 
 
-		or
+		also you can use long version of the flag name:
 
 		$ prog1 --print-all-details 
 	
@@ -136,7 +137,8 @@ In details:
 
 	- see Cli.ConvertArgumentStringToSingleObject() method for details
 
-2. Automatic validation through using Cli.AllowedRegexPattern and Cli.AllowedRange attributes
+2. Parameter validation, supported mandatory presence, numbers range check and regex patterns check 
+through using Cli.AllowedRegexPattern and Cli.AllowedRange attributes
 
         [Cli.AllowedRange(1001, 65535)]
         public int Port = 1001;
@@ -177,8 +179,15 @@ In details:
 		<add key="Cli.arg2"
 			 value="aaa[[Cli.arg1]]bbb"/>
 
+6. Reading argument value from environment variables if field is annotated with attribute Cli.EnvironmentVariable
 
-6. Reading argument value interactively through the using of Cli.Interactive annotation attribute for field
+        [Cli.EnvironmentVariable("MASTER_KEY")]
+        public string MasterKey = string.Empty;       
+
+		# could be running in Linux environment as the following
+
+		$ MASTER_KEY=password123 mono prog1.exe
+7. Reading argument value interactively if field is annotated with attribute Cli.Interactive
 
         [Cli.Interactive("Please enter master key", false)]
         [Cli.Required]
@@ -195,16 +204,9 @@ In details:
 		   - press Ctrl-C to interrupt
 		> *****
 
-7. Reading argument value from environment variables through the using of Cli.EnvironmentVariable annotation attribute for field
 
-        [Cli.EnvironmentVariable("MASTER_KEY")]
-        public string MasterKey = string.Empty;       
 
-		# could be running in Linux environment as the following
-
-		$ MASTER_KEY=password123 mono prog1.exe
-
-8. Basic support for secrets. The attribute Cli.Secret if applied prevents displaying of it's value in generated documentation, samples and in the interactive communication.
+8. Basic support for secrets. The attribute Cli.Secret if applied prevents displaying of it's value in generated help, samples and in the interactive communication.
    
         [Cli.Doc("Master key to decrypt secrets stored within configuration")]
         [Cli.Interactive("Please enter master key", false)]
@@ -215,7 +217,7 @@ In details:
 		...
 
 
-9. Embedded localization support through implementation of Cli.L10n interface within Cli.cs (no extra resources needed)
+9. Embedded localization support through implementation of Cli.LocalizedLitterals interface within Cli.cs (no extra resources needed)
 
 10. Use of SimpleCommandLine and MultiCommandLine classes to simplify Main() method implementation:
 	See the sample Sample02_RestOfArguments:
@@ -258,7 +260,9 @@ In details:
 
 TODO:
 
-1. print only interactive and appsettings arguments in the help output
+2. TBD
+
+1. Print only interactive and appsettings arguments in the help output
 
 ==
 C:\Users\andrey.larcev\Projects\CliLib2\Sample03_Interactive\bin\Debug>.\Sample03_Interactive.exe --help
