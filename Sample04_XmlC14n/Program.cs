@@ -45,22 +45,22 @@ namespace Sample02_RestOfArguments
             if (this.PrintArgs)
                 Cli.PrintArgs(this);
 
-            using (var textReader = MakeInputReader())
+            using (var reader = MakeInputReader())
             {
-                using (var stream = MakeOutputStream())
+                using (var outputStream = MakeOutputStream())
                 {
-                    using (var outputWriter = MakeOutputWriter(stream))
+                    using (var writer = MakeOutputWriter(outputStream))
                     {
-                        string envelope = textReader.ReadToEnd();
+                        string envelope = reader.ReadToEnd();
                         var transformed = GetByteRepresentationWithoutSignature(envelope, this.RemovingMethod);
-                        outputWriter.Write(transformed);
+                        writer.Write(transformed);
                     }
                 }
             }
 
         }
 
-        private TextReader MakeInputReader()
+        private StreamReader MakeInputReader()
         {
             if (this.InFile == null)
                 throw new InvalidOperationException($"The parameter {nameof(InFile)} must be provided");
@@ -68,11 +68,11 @@ namespace Sample02_RestOfArguments
             if (!this.InFile.Exists)
                 throw new InvalidOperationException($"The file specified by parameter {nameof(InFile)} does not exists");
 
-            var textReader = new StreamReader(this.InFile.FullName);
-            return textReader;
+            var reader = new StreamReader(this.InFile.FullName);
+            return reader;
         }
 
-        private Stream MakeOutputStream()
+        private FileStream MakeOutputStream()
         {
             if (this.OutFile == null)
                 throw new InvalidOperationException($"The parameter {nameof(OutFile)} must be provided");
@@ -85,8 +85,8 @@ namespace Sample02_RestOfArguments
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
 
-            var outputWriter = new BinaryWriter(stream, this.OutputFileEncoding);
-            return outputWriter;
+            var writer = new BinaryWriter(stream, this.OutputFileEncoding);
+            return writer;
         }
 
         public static byte[] GetByteRepresentationWithoutSignature(string stringSourceRepresentation, SignatureRemovingMethod removingMethod)
