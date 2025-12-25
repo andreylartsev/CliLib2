@@ -259,6 +259,33 @@ through using Cli.AllowedRegexPattern and Cli.AllowedRange attributes
 
 
 TODO:
+8. Show GUI version of interactive user interface in case the command line is omitted i.e. the simple form that is representing controls for each class field to allow user enter the values;
+- Text box for simple entry
+- Combox box for enums
+- List box for flagged enums
+
+
+
+7. Change the inner architecture in the following way:
+- The should be functional class on the each aspect that is defined by attribute. 
+- The following aspects should be defined:
+	FieldValidation -> RangeValidation / PatternValidation / Requirement (should be organized in the chain of responsibilities)
+	 - documentation for the argument help
+	 - validation itself
+	ValueSource -> AppSettings / Command line / Environment variables / Interactive (should be organized in the chain of responsibilities)
+	 - take the string value by the field name
+    TypeConverters (should be organized in the chain of responsibilities)
+	 - converts string value to different field types including arrays and enums
+	 - converts object value to string value for showing 
+	DocumentationSource -> Doc / SampleValue / Secret
+	 - take the string value by the field name
+	SpecialFilters -> Secret
+	 - filter the value before reporting it in docs
+	ArgumentList builder 
+	 - walks through the class and enumerate it's fields with attached validators, sources and documentation
+	etc
+
+6. In case of validation error the ParseArgumentException should have the information at which step the wrong string value has been detected;
 
 5. In case the field have several options to read values i.e. from appsettings (any of them) or command line or env vars, read each source in the order 1) app settings -> 2) env vars -> 3) command line args and each new read should override 
 the previous one but only the last invalid value stops the execution (all others just generate warnings);
