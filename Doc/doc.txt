@@ -259,11 +259,33 @@ through using Cli.AllowedRegexPattern and Cli.AllowedRange attributes
 
 
 TODO:
+
+10. Deny reading of Secret parameters from appSettings 
+
+10.1. Support reading of encrypted values 
+
+	[Cli.Encrypted(Algorithm=AES, Key_EV="MASTER_KEY", IV_EV="MASTER_KEY_IV")]
+	public string Password = string.Empty;
+
+	[Cli.Encrypted]
+	public string Password = string.Empty;
+
+
+9. Length validation for array or string data types
+
+	[Cli.AllowedLength(1, 5)]
+	public int[] PortsToListen = { 5555, 7777 };
+
+
+	[Cli.AllowedLength(3, 8)]
+	[Cli.Secret]
+	[Cli.EnvironmentVariable]
+	public string MasterKey;
+
 8. Show GUI version of interactive user interface in case the command line is omitted i.e. the simple form that is representing controls for each class field to allow user enter the values;
 - Text box for simple entry
 - Combox box for enums
 - List box for flagged enums
-
 
 
 7. Change the inner architecture in the following way:

@@ -37,8 +37,9 @@ namespace Sample02_RestOfArguments
         public SignatureRemovingMethod RemovingMethod = SignatureRemovingMethod.BySubstringRemoving;
 
         [Cli.Doc("The output file encoding")]
+        [Cli.SampleValue("UTF-8")]
         [Cli.Named]
-        public Encoding OutputFileEncoding = Encoding.UTF8;
+        public string OutputFileEncoding = "UTF-8";
 
         public void Exec()
         {
@@ -58,6 +59,13 @@ namespace Sample02_RestOfArguments
                 }
             }
 
+        }
+
+        private Encoding GetOutputFileEncodingByName()
+        {
+            if (this.OutputFileEncoding == null)
+                throw new ArgumentNullException(nameof(this.OutputFileEncoding));
+            return Encoding.GetEncoding(OutputFileEncoding);
         }
 
         private StreamReader MakeInputReader()
@@ -84,8 +92,8 @@ namespace Sample02_RestOfArguments
         {
             if (stream == null)
                 throw new ArgumentNullException(nameof(stream));
-
-            var writer = new BinaryWriter(stream, this.OutputFileEncoding);
+            var outputEncoding = GetOutputFileEncodingByName();
+            var writer = new BinaryWriter(stream, outputEncoding);
             return writer;
         }
 
