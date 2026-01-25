@@ -38,7 +38,7 @@ namespace CliLib
             {
                 foreach (var command in commands)
                 {
-                    if (GetIfAttributeTypeIsPresent(command, typeof(DefaultCommandAttribute)))
+                    if (IsAttributeTypePresent(command, typeof(DefaultCommandAttribute)))
                     {
                         ParseArgumentFields(new string[0], command);
                         return command;
@@ -1091,7 +1091,7 @@ namespace CliLib
         {
             var programName = System.AppDomain.CurrentDomain.FriendlyName;
             var commandName = command.CommandName;
-            var isDefault = GetIfAttributeTypeIsPresent(command, typeof(DefaultCommandAttribute));
+            var isDefault = IsAttributeTypePresent(command, typeof(DefaultCommandAttribute));
             builder.Append($"  {(isDefault ? "*" : "")}{commandName} [-h|--help|--full-doc] | ");
 
             var argumentFields = GetArgumentFields(command, ArgumentFieldTypes.All);
@@ -1788,7 +1788,7 @@ namespace CliLib
             return false;
         }
 
-        private static bool GetIfAttributeTypeIsPresent(Object programOrCommand, Type attributeType)
+        private static bool IsAttributeTypePresent(Object programOrCommand, Type attributeType)
         {
             foreach (var attr in programOrCommand.GetType().CustomAttributes)
             {
