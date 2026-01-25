@@ -742,7 +742,7 @@ namespace CliLib
                 if ((opts & ArgumentFieldTypes.AppSettings) > 0)
                 {
                     argumentField.IsAppSettings =
-                        GetIfAttributeTypeIsPresent(fieldInfo, typeof(AppSettingsAttribute));
+                        IsAttributeTypePresent(fieldInfo, typeof(AppSettingsAttribute));
                     if (argumentField.IsAppSettings)
                         shouldBeAdded = true;
                 }
@@ -758,7 +758,7 @@ namespace CliLib
                 if ((opts & ArgumentFieldTypes.Interactive) > 0)
                 {
                     argumentField.IsInteractive =
-                        GetIfAttributeTypeIsPresent(fieldInfo, typeof(InteractiveAttribute));
+                        IsAttributeTypePresent(fieldInfo, typeof(InteractiveAttribute));
                     if (argumentField.IsInteractive)
                         shouldBeAdded = true;
                 }
@@ -767,13 +767,13 @@ namespace CliLib
                     argumentField.Info = fieldInfo;
                     argumentField.ArgumentName = argumentField.IsNamed ? argumentField.LongName : PascalCaseToLispCase(fieldInfo.Name);
                     argumentField.IsRequired =
-                        GetIfAttributeTypeIsPresent(fieldInfo, typeof(RequiredAttribute));
+                        IsAttributeTypePresent(fieldInfo, typeof(RequiredAttribute));
                     argumentField.IsRestOfArguments =
-                        GetIfAttributeTypeIsPresent(fieldInfo, typeof(RestOfArgumentsAttribute));
+                        IsAttributeTypePresent(fieldInfo, typeof(RestOfArgumentsAttribute));
                     argumentField.HasSampleValue =
                         TryGetArgumentSampleValue(fieldInfo, out argumentField.SampleValue);
                     argumentField.IsSecret =
-                        GetIfAttributeTypeIsPresent(fieldInfo, typeof(SecretAttribute));
+                        IsAttributeTypePresent(fieldInfo, typeof(SecretAttribute));
                     argumentField.NewValue = null;
                     result.Add(argumentField);
                 }
@@ -1723,7 +1723,7 @@ namespace CliLib
             return false;
         }
 
-        private static bool GetIfAttributeTypeIsPresent(FieldInfo fieldInfo, Type attributeType)
+        private static bool IsAttributeTypePresent(FieldInfo fieldInfo, Type attributeType)
         {
             foreach (var attr in fieldInfo.CustomAttributes)
             {
