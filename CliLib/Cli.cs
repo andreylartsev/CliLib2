@@ -2764,11 +2764,6 @@ namespace CliLib
             public PrintVersionException() : base() { }
         }
 
-        public class PrintAppSettingsException : Exception
-        {
-            public PrintAppSettingsException() : base() { }
-        }
-
         public class ProgramHelpException : Exception
         {
             public readonly HelpType HelpType;
