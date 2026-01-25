@@ -35,14 +35,14 @@ namespace Sample01_TcpServerAndClient
 
         [Cli.Doc("binding to specific IP address i.e. \"0.0.0.0\" / \"127.0.0.1\"  ")]
         [Cli.Named('B')]
-        [Cli.SampleValue]
+        [Cli.SampleValue("localhost")]
         [Cli.Required]
         public IPHostEntry BindTo;
 
         [Cli.Doc("bind to specific IP port i.e. 1000. Note that binding to ports with number equals or less than 1000 required root permissions")]
         [Cli.Positional]
         [Cli.Required]
-        [Cli.SampleValue]
+        [Cli.SampleValue("5555")]
         [Cli.AllowedRange(1001, 65535)]
         public int Port = 5000;
 

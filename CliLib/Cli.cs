@@ -952,26 +952,12 @@ namespace CliLib
 
             if (helpType == HelpType.Full)
             {
-                StringBuilder appSettingsBuilder = new StringBuilder();
-
-                appSettingsBuilder.AppendLine(L10n.The_following_parameters_are_allowed_within_appSettings_section_of_app_config());
-                appSettingsBuilder.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\" ?>");
-                appSettingsBuilder.AppendLine("<configuration>");
-                appSettingsBuilder.AppendLine(" <appSettings>");
-
-                AppendCommandAppSettings(programObj, appSettingsBuilder);
-                if (commands != null)
+                foreach (var command in commands)
                 {
-                    foreach (var command in commands)
-                    {
-                        AppendCommandAppSettings(command, appSettingsBuilder);
-                    }
+                    PrintCommandUsage(command, helpType);
                 }
-                appSettingsBuilder.AppendLine(" </appSettings>");
-                appSettingsBuilder.AppendLine("</configuration>");
-
-                Console.WriteLine(appSettingsBuilder.ToString());
             }
+
         }
 
         public static void PrintCommandUsage(ICommand cmd, HelpType helpType = HelpType.Full)
@@ -1117,7 +1103,6 @@ namespace CliLib
                     if (IsArgumentFieldShortNamedOrPositional(argumentField))
                     {
                         AppendArgumentUsageToCommandLine(argumentField, builder);
-                        AppendArgumentDocumentation(argumentField, command, builder);
                     }
                 }
                 else // Full
@@ -2505,7 +2490,6 @@ namespace CliLib
                 {
                     this.actionToCall = () =>
                     {
-                        Cli.PrintCommandLine(args);
                         Cli.PrintUsage(this.program, e.HelpType);
                     };
                 }
@@ -2522,7 +2506,7 @@ namespace CliLib
                     {
                         Console.WriteLine(e.Message);
                         Cli.PrintCommandLine(args);
-                        Cli.PrintUsage(this.program);
+                        Cli.PrintUsage(this.program, HelpType.Quick);
                     };
                 }
                 return this;
@@ -2567,7 +2551,6 @@ namespace CliLib
                 {
                     this.actionToCall = () =>
                     {
-                        Cli.PrintCommandLine(args);
                         Cli.PrintUsage(this.program, this.commands, e.HelpType);
                     };
                 }
@@ -2575,7 +2558,6 @@ namespace CliLib
                 {
                     this.actionToCall = () =>
                     {
-                        Cli.PrintCommandLine(args);
                         if (e.Command is Cli.ICommand commandToHelpWith)
                         {
                             Cli.PrintCommandUsage(commandToHelpWith, e.HelpType);
@@ -2609,8 +2591,7 @@ namespace CliLib
                     {
                         Console.WriteLine(e.Message);
                         Cli.PrintCommandLine(args);
-                        var commandToHelpWith = e.Command as Cli.ICommand;
-                        if (commandToHelpWith != null)
+                        if (e.Command is Cli.ICommand commandToHelpWith)
                         {
                             Cli.PrintCommandUsage(commandToHelpWith);
                         }
