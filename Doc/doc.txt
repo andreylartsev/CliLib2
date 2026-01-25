@@ -312,7 +312,7 @@ TODO:
 5. In case the field have several options to read values i.e. from appsettings (any of them) or command line or env vars, read each source in the order 1) app settings -> 2) env vars -> 3) command line args and each new read should override 
 the previous one but only the last invalid value stops the execution (all others just generate warnings);
 
-4. [*] Implement --full-doc option instead of separate HelpType.Quick/Full for -h/--help options that should say about all commands with samples, app settings and supported environment variables;
+4. [v] Implement --full-doc option instead of separate HelpType.Quick/Full for -h/--help options that should say about all commands with samples, app settings and supported environment variables;
 
 3. Support reading argument values from the binary or text file with parameters path and maximum file size i.e.
 
