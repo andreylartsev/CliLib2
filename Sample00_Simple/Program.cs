@@ -47,10 +47,6 @@ namespace Sample00_Simple
                     }
 
                 }
-                catch (Cli.PrintAppSettingsException)
-                {
-                    Cli.PrintAppSettings(p);
-                }
                 catch (Cli.PrintVersionException)
                 {
                     Cli.PrintVersion();

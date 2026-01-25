@@ -24,20 +24,14 @@ namespace CliLib
             if (commands == null)
                 throw new ArgumentNullException(nameof(commands));
 
-            if (args.Length == 1 && (args[0] == "-h" || args[0] == "--help"))
+            if (args.Length == 1 && TryGetHelpTypeByArg0(args[0], out var helpType))
             {
-                var helpType = GetHelpTypeByArg0(args[0]);
                 throw new ProgramHelpException(helpType);
             }
 
-            if (args.Length == 1 && (args[0] == "-v" || args[0] == "--version"))
+            if (args.Length == 1 && IsVersionRequested(args[0]))
             {
                 throw new PrintVersionException();
-            }
-
-            if (args.Length == 1 && (args[0] == "--print-app-settings"))
-            {
-                throw new PrintAppSettingsException();
             }
 
             if (args.Length == 0)
@@ -60,10 +54,9 @@ namespace CliLib
                 if (command.CommandName == commandName)
                 {
                     var commandArgs = args.Skip(1).ToArray();
-                    if (commandArgs.Length >= 1 && (commandArgs[0] == "-h" || commandArgs[0] == "--help"))
+                    if (commandArgs.Length >= 1 && TryGetHelpTypeByArg0(commandArgs[0], out var commandHelpType))
                     {
-                        var helpType = GetHelpTypeByArg0(commandArgs[0]);
-                        throw new CommandHelpException(command, helpType);
+                        throw new CommandHelpException(command, commandHelpType);
                     }
                     ParseArgumentFields(commandArgs, command);
                     return command;
@@ -78,37 +71,50 @@ namespace CliLib
             if (program == null)
                 throw new ArgumentNullException(nameof(program));
 
-            if (args.Length == 1 && (args[0] == "-h" || args[0] == "--help"))
+            if (args.Length == 1 && TryGetHelpTypeByArg0(args[0], out var helpType))
             {
-                var helpType = GetHelpTypeByArg0(args[0]);
                 throw new ProgramHelpException(helpType);
             }
 
-            if (args.Length == 1 && (args[0] == "-v" || args[0] == "--version"))
+            if (args.Length == 1 && IsVersionRequested(args[0]))
             {
                 throw new PrintVersionException();
-            }
-
-            if (args.Length == 1 && (args[0] == "--print-app-settings"))
-            {
-                throw new PrintAppSettingsException();
             }
 
             ParseArgumentFields(args, program);
         }
 
-        private static HelpType GetHelpTypeByArg0(string arg0)
-            => arg0.CompareTo("-h") == 0 ? HelpType.Quick : HelpType.Full;
+        private static bool TryGetHelpTypeByArg0(string arg0, out HelpType helpType)
+        {
 
-        public static void AskUserForInput(Object obj, string fieldName)
+            if ((arg0.CompareTo("-h") == 0) || (arg0.CompareTo("--help") == 0))
+            {
+                helpType = HelpType.Quick;
+                return true;
+            }
+            else if (arg0.CompareTo("--full-doc") == 0)
+            {
+                helpType = HelpType.Full;
+                return true;
+            }
+            else
+            {
+                helpType = HelpType.Quick;
+                return false;
+            }
+        }
+
+        private static bool IsVersionRequested(string arg0)
+            => (arg0.CompareTo("-v") == 0 || arg0.CompareTo("--version") == 0);
+
+        private static void AskUserForInput(Object obj, ArgumentField argumentField)
         {
             if (obj == null)
                 throw new ArgumentNullException(nameof(obj));
-            if (fieldName == null)
-                throw new ArgumentNullException(nameof(fieldName));
+            if (argumentField == null)
+                throw new ArgumentNullException(nameof(argumentField));
 
             var allFields = GetArgumentFields(obj, ArgumentFieldTypes.Interactive);
-            ArgumentField argumentField = GetArgumentFieldByFieldName(obj, allFields, fieldName);
 
             if (TryGetInteractiveInputLabel(
                 argumentField.Info, out string inputLabel, out bool useDeaultIfEmpty))
@@ -136,7 +142,6 @@ namespace CliLib
                         if (!string.IsNullOrEmpty(userInput))
                         {
                             ValidateAndSetNewArgumentValue(obj, argumentField, userInput);
-                            CommitAllNewValues(obj, new ArgumentField[] { argumentField });
                             userInputFinished = true;
                             break;
                         }
@@ -160,7 +165,20 @@ namespace CliLib
 
             }
             else
-                throw new InvalidOperationException(L10n.The_field_does_not_support_interactive_input(fieldName));
+                throw new InvalidOperationException(L10n.The_field_does_not_support_interactive_input(argumentField.ArgumentName));
+        }
+
+        public static void AskUserForInput(Object obj, string fieldName)
+        {
+            if (obj == null)
+                throw new ArgumentNullException(nameof(obj));
+            if (fieldName == null)
+                throw new ArgumentNullException(nameof(fieldName));
+
+            var allFields = GetArgumentFields(obj, ArgumentFieldTypes.Interactive);
+            ArgumentField argumentField = GetArgumentFieldByFieldName(obj, allFields, fieldName);
+
+            AskUserForInput(obj, argumentField);
         }
 
         public static bool AskUserIfYesOrNo(
@@ -293,7 +311,7 @@ namespace CliLib
             {
                 if (field.IsInteractive && field.IsRequired && field.NewValue == null)
                 {
-                    AskUserForInput(obj, field.Info.Name);
+                    AskUserForInput(obj, field);
                 }
             }
         }
@@ -889,10 +907,29 @@ namespace CliLib
             Console.WriteLine(commandLineUsage.ToString());
             Console.WriteLine(argumentDocumentation.ToString());
 
+            if (helpType == HelpType.Full)
+            {
+                StringBuilder appSettingsBuilder = new StringBuilder();
+
+                appSettingsBuilder.AppendLine("The following parameters are allowed within appSettings section of app.config:");
+
+                appSettingsBuilder.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\" ?>");
+                appSettingsBuilder.AppendLine("<configuration>");
+                appSettingsBuilder.AppendLine(" <appSettings>");
+                AppendCommandAppSettings(programObj, appSettingsBuilder);
+                appSettingsBuilder.AppendLine(" </appSettings>");
+                appSettingsBuilder.AppendLine("</configuration>");
+
+                Console.WriteLine(appSettingsBuilder.ToString());
+            }
+
         }
 
         public static void PrintUsage(Object programObj, ICommand[] commands, HelpType helpType = HelpType.Full)
         {
+            if (programObj == null)
+                throw new ArgumentNullException(nameof(programObj));
+
             if (commands == null)
                 throw new ArgumentNullException(nameof(commands));
 
@@ -912,6 +949,29 @@ namespace CliLib
 
             Console.WriteLine(commandLineUsage.ToString());
             Console.WriteLine(commandDocumentation.ToString());
+
+            if (helpType == HelpType.Full)
+            {
+                StringBuilder appSettingsBuilder = new StringBuilder();
+
+                appSettingsBuilder.AppendLine(L10n.The_following_parameters_are_allowed_within_appSettings_section_of_app_config());
+                appSettingsBuilder.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\" ?>");
+                appSettingsBuilder.AppendLine("<configuration>");
+                appSettingsBuilder.AppendLine(" <appSettings>");
+
+                AppendCommandAppSettings(programObj, appSettingsBuilder);
+                if (commands != null)
+                {
+                    foreach (var command in commands)
+                    {
+                        AppendCommandAppSettings(command, appSettingsBuilder);
+                    }
+                }
+                appSettingsBuilder.AppendLine(" </appSettings>");
+                appSettingsBuilder.AppendLine("</configuration>");
+
+                Console.WriteLine(appSettingsBuilder.ToString());
+            }
         }
 
         public static void PrintCommandUsage(ICommand cmd, HelpType helpType = HelpType.Full)
@@ -962,31 +1022,17 @@ namespace CliLib
             Console.WriteLine(commandLineUsage.ToString());
             Console.WriteLine(argumentDocumentation.ToString());
 
-        }
-
-        public static void PrintAppSettings(Object programObj, ICommand[] commands = null)
-        {
-            if (programObj == null)
-                throw new ArgumentNullException(nameof(programObj));
-
-            StringBuilder appSettingsBuilder = new StringBuilder();
-
-            appSettingsBuilder.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\" ?>");
-            appSettingsBuilder.AppendLine("<configuration>");
-            appSettingsBuilder.AppendLine(" <appSettings>");
-
-            AppendCommandAppSettings(programObj, appSettingsBuilder);
-            if (commands != null)
+            if (helpType == HelpType.Full)
             {
-                foreach (var command in commands)
-                {
-                    AppendCommandAppSettings(command, appSettingsBuilder);
-                }
-            }
-            appSettingsBuilder.AppendLine(" </appSettings>");
-            appSettingsBuilder.AppendLine("</configuration>");
+                StringBuilder appSettingsBuilder = new StringBuilder();
 
-            Console.WriteLine(appSettingsBuilder.ToString());
+                appSettingsBuilder.AppendLine(L10n.The_following_parameters_are_allowed_within_appSettings_section_of_app_config());
+
+                AppendCommandAppSettings(cmd, appSettingsBuilder);
+
+                Console.WriteLine(appSettingsBuilder.ToString());
+            }
+
         }
 
         public static void AppendCommandAppSettings(Object cmd, StringBuilder appSettingsDocumentation)
@@ -1060,7 +1106,7 @@ namespace CliLib
             var programName = System.AppDomain.CurrentDomain.FriendlyName;
             var commandName = command.CommandName;
             var isDefault = GetIfAttributeTypeIsPresent(command, typeof(DefaultCommandAttribute));
-            builder.Append($"  {(isDefault ? "*" : "")}{commandName} [-h|--help] ");
+            builder.Append($"  {(isDefault ? "*" : "")}{commandName} [-h|--help|--full-doc] | ");
 
             var argumentFields = GetArgumentFields(command, ArgumentFieldTypes.All);
             foreach (var argumentField in argumentFields)
@@ -2042,6 +2088,8 @@ namespace CliLib
             string The_value_is_a_secret();
             string CommandName_command_settings(string commandName);
             string Program_settings();
+
+            string The_following_parameters_are_allowed_within_appSettings_section_of_app_config();
         }
 
 
@@ -2103,11 +2151,11 @@ namespace CliLib
             public string press_Ctrl_C_to_interrupt()
                 => $"   - press Ctrl-C to interrupt";
             public string Usage_program(string platformDependentCommandLineInvitation, string programName)
-                => $"Usage: {platformDependentCommandLineInvitation} {programName} [-h|--help] | [-v|--version] | [--print-app-settings] | [args] ";
+                => $"Usage: {platformDependentCommandLineInvitation} {programName} [-h|--help|--full-doc|-v|--version] | ";
             public string Usage_program_with_commands(string platformDependentCommandLineInvitation, string programName)
-                => $"Usage: {platformDependentCommandLineInvitation} {programName} [-h|--help] | [-v|--version] | [--print-app-settings] | <command-name> [args] ";
+                => $"Usage: {platformDependentCommandLineInvitation} {programName} [-h|--help|--full-doc|-v|--version] | <command-name> [args] ";
             public string Usage_command(string platformDependentCommandLineInvitation, string programName, string commandName)
-                => $"Usage: {platformDependentCommandLineInvitation} {programName} {commandName} [-h|--help] | ";
+                => $"Usage: {platformDependentCommandLineInvitation} {programName} {commandName} [-h|--help|--full-doc] | ";
 
             public string Available_commands()
                 => $"Available commands: ";
@@ -2159,6 +2207,8 @@ namespace CliLib
                 => $"{commandName} command settings";
             public string Program_settings()
                 => "program settings";
+            public string The_following_parameters_are_allowed_within_appSettings_section_of_app_config()
+                => "The following parameters are allowed within appSettings section of app.config";
         }
 
         private class RuLiterals : ILocalizedLiterals
@@ -2219,11 +2269,11 @@ namespace CliLib
             public string press_Ctrl_C_to_interrupt()
                 => $"   - нажмите Ctrl-C что бы прервать";
             public string Usage_program(string platformDependentCommandLineInvitation, string programName)
-                => $"Использование: {platformDependentCommandLineInvitation} {programName} [-h|--help] | [-v|--version] | [--print-app-settings] | [args] ";
+                => $"Использование: {platformDependentCommandLineInvitation} {programName} [-h|--help|--full-doc|-v|--version] | ";
             public string Usage_program_with_commands(string platformDependentCommandLineInvitation, string programName)
-                => $"Использование: {platformDependentCommandLineInvitation} {programName} [-h|--help] | [-v|--version] | [--print-app-settings] | <command-name> [args] ";
+                => $"Использование: {platformDependentCommandLineInvitation} {programName} [-h|--help|--full-doc|-v|--version] | <command-name> [args] ";
             public string Usage_command(string platformDependentCommandLineInvitation, string programName, string commandName)
-                => $"Использование: {platformDependentCommandLineInvitation} {programName} {commandName} [-h|--help] | ";
+                => $"Использование: {platformDependentCommandLineInvitation} {programName} {commandName} [-h|--help|--full-doc] | ";
             public string Available_commands()
                 => $"Доступные команды: ";
             public string the_data_type_is_enum_with_possible_values(string typeName, string possibleValues)
@@ -2275,6 +2325,8 @@ namespace CliLib
                 => $"Параметры команды {commandName}";
             public string Program_settings()
                 => "Параметры программы";
+            public string The_following_parameters_are_allowed_within_appSettings_section_of_app_config()
+                => "В разделе appSettings файла app.config допустимы следующие параметры:";
         }
 
         internal static class ConsoleReadLine 
@@ -2449,13 +2501,6 @@ namespace CliLib
                         this.program.Exec(); 
                     };
                 }
-                catch (Cli.PrintAppSettingsException)
-                {
-                    this.actionToCall = () =>
-                    {
-                        Cli.PrintAppSettings(this.program);
-                    };
-                }
                 catch (Cli.ProgramHelpException e)
                 {
                     this.actionToCall = () =>
@@ -2518,13 +2563,6 @@ namespace CliLib
                         commandToCall.Exec();
                     };
                 }
-                catch (Cli.PrintAppSettingsException)
-                {
-                    this.actionToCall = () =>
-                    {
-                        Cli.PrintAppSettings(this.program, this.commands);
-                    };
-                }
                 catch (Cli.ProgramHelpException e)
                 {
                     this.actionToCall = () =>
@@ -2538,15 +2576,14 @@ namespace CliLib
                     this.actionToCall = () =>
                     {
                         Cli.PrintCommandLine(args);
-                        var commandToHelpWith = e.Command as Cli.ICommand;
-                        if (commandToHelpWith != null)
+                        if (e.Command is Cli.ICommand commandToHelpWith)
                         {
-                            Cli.PrintCommandUsage(commandToHelpWith);
+                            Cli.PrintCommandUsage(commandToHelpWith, e.HelpType);
                         }
                         else
                         {
                             Cli.PrintCommandLine(args);
-                            Cli.PrintUsage(this.program, this.commands);
+                            Cli.PrintUsage(this.program, this.commands, e.HelpType);
                         }
                     };
                 }
@@ -2563,7 +2600,7 @@ namespace CliLib
                     {
                         Console.WriteLine(e.Message);
                         Cli.PrintCommandLine(args);
-                        Cli.PrintUsage(this.program, this.commands);
+                        Cli.PrintUsage(this.program, this.commands, HelpType.Quick);
                     };
                 }
                 catch (Cli.ArgumentParseException e)
