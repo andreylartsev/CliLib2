@@ -15,9 +15,10 @@ namespace Sample05_FileContent
     {
         [Cli.Doc("Print given arguments")]
         [Cli.Named('A')]
+        [Cli.SampleValue]
         public bool PrintArgs = false;
 
-        [Cli.Doc("The /etc/passwd file")]
+        [Cli.Doc("The passwords file")]
         [Cli.Secret]
         [Cli.Required]
         [Cli.FileContent("/etc/passwd", 1024 * 65)]

@@ -991,7 +991,7 @@ namespace CliLib
             {
                 StringBuilder appSettingsBuilder = new StringBuilder();
 
-                appSettingsBuilder.AppendLine("The following parameters are allowed within appSettings section of app.config:");
+                appSettingsBuilder.AppendLine(L10n.The_following_parameters_are_allowed_within_appSettings_section_of_app_config());
 
                 appSettingsBuilder.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\" ?>");
                 appSettingsBuilder.AppendLine("<configuration>");
