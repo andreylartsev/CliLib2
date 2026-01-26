@@ -6,7 +6,7 @@ using System.Security.Cryptography.Xml;
 using System.Text;
 using System.Xml.Linq;
 
-namespace Sample02_RestOfArguments
+namespace Sample04_XmlC14n
 {
 
     [Cli.Doc(@"Canonization of the XML documents")]

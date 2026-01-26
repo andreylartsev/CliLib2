@@ -1,6 +1,5 @@
 ﻿using System;
-
-using System.Collections;
+using System.CodeDom;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -286,6 +285,8 @@ namespace CliLib
 
             ReadArgumentsFromCommandLine(args, obj, allFields);
 
+            ReadArgumentsFromFiles(obj, allFields);
+
             ReadArgumentsInteractively(obj, allFields);
 
             // cross check
@@ -440,12 +441,78 @@ namespace CliLib
             }
         }
 
+        private static void ReadArgumentsFromFiles(Object obj, IEnumerable<ArgumentField> argumentFields)
+        {
+            // read arguments from appSettings
+            foreach (var argumentField in argumentFields)
+            {
+                if (argumentField.IsFileContent)
+                {
+                    // Validation
+                    var argumentName = argumentField.ArgumentName;
+                    var isRequired = argumentField.IsRequired;
+
+                    // validate target type
+                    var fieldName = argumentField.Info.Name;
+                    var fieldType = argumentField.Info.FieldType;
+                    if (fieldType != typeof(MemoryStream))
+                        throw new ArgumentParseException($"The attribute '{nameof(FileContentAttribute)}' is only applicable to fields with {nameof(MemoryStream)} type but the '{fieldType.FullName}' has been used with the field '{argumentField.Info.Name}'", obj);
+
+                    try
+                    {
+                        // check if the file exists
+                        var filePath = argumentField.FilePath;
+                        var fileInfo = new FileInfo(filePath);
+                        if (!fileInfo.Exists)
+                            throw new ArgumentParseException($"The file '{filePath}' specified as a data source for parameter '{argumentName}' does not exists!", obj);
+
+                        // validate file size
+                        var maxFileSize = argumentField.FileMaxSize;
+                        var fileSize = fileInfo.Length;
+                        if (fileSize > maxFileSize)
+                            throw new ArgumentParseException($"The size of file '{filePath}' {fileSize} exceeds the limit {maxFileSize} for parameter '{argumentName}'", obj);
+
+                        if (TryGetContentFromFile(filePath, out MemoryStream stream))
+                        {
+                            argumentField.NewValue = stream;
+                        }
+
+                    }
+                    catch (ArgumentParseException e)
+                    {
+                        if (isRequired)
+                            throw;
+                        else
+                            Console.Error.WriteLine(e.Message);
+                    }
+
+                }
+            }
+        }
+
+        private static bool TryGetContentFromFile(string filePath, out MemoryStream outStream)
+        {
+            if (filePath == null)
+                throw new ArgumentNullException(nameof(filePath));
+            outStream = null;
+            try
+            {
+                byte[] bytes = File.ReadAllBytes(filePath);
+                outStream = new MemoryStream(bytes);
+                return true;
+            }
+            catch (IOException e)
+            {
+                throw new ArgumentParseException(L10n.The_file_could_not_be_read_due_to_inner_error(filePath), e);
+            }
+        }
+
         private static void ReadArgumentsFromAppSettings(Object obj, IEnumerable<ArgumentField> argumentFields, bool rethrowArgumentParseException)
         {
             // read arguments from appSettings
             foreach (var argumentField in argumentFields)
             {
-                if (argumentField.IsAppSettings || argumentField.IsNamed || argumentField.IsPositional || argumentField.IsInteractive || argumentField.IsEnvironmentVar)
+                if (IsArgumentCapableReadingFromAppSettings(argumentField))
                 {
                     if (TryGetValueFromAppSettings(
                         obj, argumentField.ArgumentName, argumentField.Info.FieldType.IsArray, out string strArgValue))
@@ -468,6 +535,9 @@ namespace CliLib
                 }
             }
         }
+
+        private static bool IsArgumentCapableReadingFromAppSettings(ArgumentField argumentField)
+            => (argumentField.IsAppSettings || argumentField.IsNamed || argumentField.IsPositional || argumentField.IsInteractive || argumentField.IsEnvironmentVar);
 
         private static void CommitAllNewValues(Object obj, IEnumerable<ArgumentField> argumentFields)
         {
@@ -709,11 +779,14 @@ namespace CliLib
             public bool IsSecret;
             public bool IsEnvironmentVar;
             public string EnvironmentVar;
+            public bool IsFileContent;
+            public string FilePath;
+            public uint FileMaxSize;
             public Object NewValue;
         }
 
         public enum ArgumentFieldTypes {
-            NamedOrPositional = 1, AppSettings = 2, Interactive = 4, EnvironmentVar = 8, All = NamedOrPositional | AppSettings | Interactive | EnvironmentVar}
+            NamedOrPositional = 1, AppSettings = 2, Interactive = 4, EnvironmentVar = 8, FileContent = 16, All = NamedOrPositional | AppSettings | Interactive | EnvironmentVar | FileContent}
         private static List<ArgumentField> GetArgumentFields(
             Object obj,
             ArgumentFieldTypes opts = ArgumentFieldTypes.All)
@@ -760,6 +833,13 @@ namespace CliLib
                     argumentField.IsInteractive =
                         IsAttributeTypePresent(fieldInfo, typeof(InteractiveAttribute));
                     if (argumentField.IsInteractive)
+                        shouldBeAdded = true;
+                }
+                if ((opts & ArgumentFieldTypes.FileContent) > 0)
+                {
+                    argumentField.IsFileContent = 
+                        TryGetArgumentFilePath(fieldInfo, out argumentField.FilePath, out argumentField.FileMaxSize);
+                    if (argumentField.IsFileContent)
                         shouldBeAdded = true;
                 }
                 if (shouldBeAdded)
@@ -1051,19 +1131,23 @@ namespace CliLib
 
             foreach (var argumentField in argumentFields)
             {
-                appSettingsDocumentation.AppendLine($"  <!--");
-                if (TryGetArgumentDocumentation(argumentField.Info, out var documentation))
-                    appSettingsDocumentation.AppendLine($"   - {documentation}");
-                AppendArgumentDocumentation(argumentField, cmd, appSettingsDocumentation, true);
-                appSettingsDocumentation.AppendLine($"  -->");
-                var val = argumentField.Info.GetValue(cmd);
-                var str = StringValueOfSinleObjectOrArray(val, argumentField.IsSecret, argumentField.IsRestOfArguments);
-                var xmlEscaped = EscapeXmlSpecialSymbols(str);
-                if (!string.IsNullOrEmpty(commandName))
-                    appSettingsDocumentation.AppendLine($"  <add key=\"Cli.{commandName}.{argumentField.ArgumentName}\"");
-                else
-                    appSettingsDocumentation.AppendLine($"  <add key=\"Cli.{argumentField.ArgumentName}\"");
-                appSettingsDocumentation.AppendLine($"       value=\"{xmlEscaped}\"/>");
+                if (IsArgumentCapableReadingFromAppSettings(argumentField))
+                {
+                    appSettingsDocumentation.AppendLine($"  <!--");
+                    if (TryGetArgumentDocumentation(argumentField.Info, out var documentation))
+                        appSettingsDocumentation.AppendLine($"   - {documentation}");
+                    AppendArgumentDocumentation(argumentField, cmd, appSettingsDocumentation, true);
+                    appSettingsDocumentation.AppendLine($"  -->");
+                    var val = argumentField.Info.GetValue(cmd);
+                    var str = StringValueOfSinleObjectOrArray(val, argumentField.IsSecret, argumentField.IsRestOfArguments);
+                    var xmlEscaped = EscapeXmlSpecialSymbols(str);
+                    if (!string.IsNullOrEmpty(commandName))
+                        appSettingsDocumentation.AppendLine($"  <add key=\"Cli.{commandName}.{argumentField.ArgumentName}\"");
+                    else
+                        appSettingsDocumentation.AppendLine($"  <add key=\"Cli.{argumentField.ArgumentName}\"");
+                    appSettingsDocumentation.AppendLine($"       value=\"{xmlEscaped}\"/>");
+
+                }
             }
             appSettingsDocumentation.AppendLine();
         }
@@ -1174,6 +1258,10 @@ namespace CliLib
             {
                 commandLineBuilder.Append($"${argumentField.EnvironmentVar}");
             }
+            else if (argumentField.IsFileContent)
+            {
+                commandLineBuilder.Append($"{argumentField.ArgumentName} ({argumentField.FilePath})");
+            }
         }
 
         private static void AppendArgumentDocumentation(
@@ -1266,6 +1354,12 @@ namespace CliLib
             {
                 builder.Append(docLinePrefix);
                 builder.AppendLine(L10n.Could_be_passed_via_environment_variable_envVar(argumentField.EnvironmentVar));
+            }
+
+            if (argumentField.IsFileContent)
+            {
+                builder.Append(docLinePrefix);
+                builder.AppendLine(L10n.The_content_is_read_from_the_file(argumentField.FilePath, argumentField.FileMaxSize));
             }
 
             if (argumentField.IsSecret)
@@ -1918,6 +2012,37 @@ namespace CliLib
             return false;
         }
 
+        private static bool TryGetArgumentFilePath(FieldInfo fieldInfo, out string filePath, out uint maxFileSize)
+        {
+            filePath = string.Empty;
+            maxFileSize = UInt32.MaxValue;
+            foreach (var attr in fieldInfo.CustomAttributes)
+            {
+                if (attr.AttributeType == typeof(FileContentAttribute))
+                {
+                    var constuctorArgs = attr.ConstructorArguments.GetEnumerator();
+                    if (constuctorArgs.MoveNext())
+                    {
+                        var arg0 = constuctorArgs.Current;
+                        if (arg0.ArgumentType == typeof(String))
+                        {
+                            filePath = Convert.ToString(arg0.Value);
+                        }
+                        if (constuctorArgs.MoveNext())
+                        {
+                            var arg1 = constuctorArgs.Current;
+                            if (arg1.ArgumentType == typeof(UInt32))
+                            {
+                                maxFileSize = Convert.ToUInt32(arg1.Value);
+                            }
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         private static bool TryGetArgumentValidationPattern(FieldInfo fieldInfo, out string pattern, out bool ignoreCase)
         {
             pattern = string.Empty; ignoreCase = false;
@@ -1928,21 +2053,21 @@ namespace CliLib
                     var constuctorArgs = attr.ConstructorArguments.GetEnumerator();
                     if (constuctorArgs.MoveNext())
                     {
-                        var arg = constuctorArgs.Current;
-                        if (arg.ArgumentType == typeof(String))
+                        var arg0 = constuctorArgs.Current;
+                        if (arg0.ArgumentType == typeof(String))
                         {
-                            pattern = Convert.ToString(arg.Value);
+                            pattern = Convert.ToString(arg0.Value);
                         }
-                    }
-                    if (constuctorArgs.MoveNext())
-                    {
-                        var arg = constuctorArgs.Current;
-                        if (arg.ArgumentType == typeof(Boolean))
+                        if (constuctorArgs.MoveNext())
                         {
-                            ignoreCase = Convert.ToBoolean(arg.Value);
+                            var arg1 = constuctorArgs.Current;
+                            if (arg1.ArgumentType == typeof(Boolean))
+                            {
+                                ignoreCase = Convert.ToBoolean(arg1.Value);
+                            }
                         }
+                        return true;
                     }
-                    return true;
                 }
             }
             return false;
@@ -2069,12 +2194,15 @@ namespace CliLib
 
             string Could_be_requested_interactively();
             string Could_be_passed_via_environment_variable_envVar(string envVar);
+            string The_content_is_read_from_the_file(string filePath, uint maxFileSize);
             string Could_be_specified_in_app_config_appSettings();
             string The_value_is_a_secret();
             string CommandName_command_settings(string commandName);
             string Program_settings();
 
             string The_following_parameters_are_allowed_within_appSettings_section_of_app_config();
+
+            string The_file_could_not_be_read_due_to_inner_error(string filePath);
         }
 
 
@@ -2182,6 +2310,9 @@ namespace CliLib
                 => $"All allowed environment variables:";
             public string Could_be_passed_via_environment_variable_envVar(string envVar)
                 => $"   - could be passed via environment variable ${envVar}";
+            public string The_content_is_read_from_the_file(string filePath, uint maxFileSize)
+                => $"   - The content is read from the file '{filePath}', size limit is {maxFileSize} bytes";
+
             public string Could_be_specified_in_app_config_appSettings()
                 => $"   - could be specified in app.config / appSettings";
             public string Could_be_requested_interactively()
@@ -2194,6 +2325,8 @@ namespace CliLib
                 => "program settings";
             public string The_following_parameters_are_allowed_within_appSettings_section_of_app_config()
                 => "The following parameters are allowed within appSettings section of app.config";
+            public string The_file_could_not_be_read_due_to_inner_error(string filePath)
+                => $"The file {filePath} could not be read due to inner error";
         }
 
         private class RuLiterals : ILocalizedLiterals
@@ -2299,6 +2432,8 @@ namespace CliLib
                 => $"Допустимые переменные среды окружения:";
             public string Could_be_passed_via_environment_variable_envVar(string envVar)
                 => $"   - может быть передан через переменную среды окружения: ${envVar}";
+            public string The_content_is_read_from_the_file(string filePath, uint maxFileSize)
+                => $"   - содержимое читается из файла '{filePath}', ограничения размера {maxFileSize} байт";
             public string Could_be_specified_in_app_config_appSettings()
                 => $"   - может быть указан в секции appSettings конфигурационного файла app.config";
 
@@ -2312,6 +2447,8 @@ namespace CliLib
                 => "Параметры программы";
             public string The_following_parameters_are_allowed_within_appSettings_section_of_app_config()
                 => "В разделе appSettings файла app.config допустимы следующие параметры:";
+            public string The_file_could_not_be_read_due_to_inner_error(string filePath)
+                => $"Невозможно прочитать файл {filePath} из за следующей ошибки";
         }
 
         internal static class ConsoleReadLine 
@@ -2739,6 +2876,14 @@ namespace CliLib
             }
         }
 
+        [AttributeUsage(AttributeTargets.Field)]
+        public class FileContentAttribute : Attribute
+        {
+            public FileContentAttribute(string filePath, uint maxFileSize = UInt32.MaxValue)
+            {
+            }
+        }
+
         [AttributeUsage(AttributeTargets.Class)]
         public class DefaultCommandAttribute : Attribute
         {
@@ -2746,6 +2891,7 @@ namespace CliLib
             {
             }
         }
+
 
         public class ArgumentParseException : ArgumentException
         {
