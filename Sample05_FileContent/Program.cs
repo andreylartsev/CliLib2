@@ -32,7 +32,6 @@ namespace Sample05_FileContent
         public string MasterKey = "123";
 
         [Cli.Doc("Non required appSettings parameter")]
-        [Cli.Secret]
         [Cli.AppSettings]
         public bool NonRequired = false;
 
