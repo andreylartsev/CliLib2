@@ -18,17 +18,17 @@ namespace Sample05_FileContent
         [Cli.SampleValue]
         public bool PrintArgs = false;
 
-        [Cli.Doc("The passwords file")]
-        [Cli.Secret]
+        [Cli.Doc("content of file /etc/passwd")]
+        [Cli.ContentOfFile("/etc/passwd", 1024 * 65)]
         [Cli.Required]
-        [Cli.FileContent("/etc/passwd", 1024 * 65)]
+        [Cli.Secret]
         public MemoryStream PasswdContent;
 
         [Cli.Doc("The master key")]
-        [Cli.Secret]
+        [Cli.EnvironmentVariable("MASTER_KEY")]
         [Cli.Interactive("Please enter master key", false)]
         [Cli.Required]
-        [Cli.EnvironmentVariable("MASTER_KEY")]
+        [Cli.Secret]
         public string MasterKey = "123";
 
         [Cli.Doc("Non required appSettings parameter")]
@@ -40,6 +40,11 @@ namespace Sample05_FileContent
             if (this.PrintArgs)
                 Cli.PrintArgs(this);
 
+            if (this.PasswdContent == null)
+            {
+                Console.WriteLine($"{nameof(PasswdContent)} is empty or null");
+                return;
+            }
             using (var reader = new StreamReader(this.PasswdContent, Encoding.UTF8))
             {
                 string asStr = reader.ReadToEnd();

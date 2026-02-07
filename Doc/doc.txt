@@ -314,9 +314,9 @@ the previous one but only the last invalid value stops the execution (all others
 
 4. [v] Implement --full-doc option instead of separate HelpType.Quick/Full for -h/--help options that should say about all commands with samples, app settings and supported environment variables;
 
-3. [*] Support reading argument values from the binary or text file with parameters path and maximum file size i.e.
+3. [v] Support reading argument values from the binary or text file with parameters path and maximum file size i.e.
 
-	[Cli.FileContent("/var/secrets/private_key.der", 65535)]
+	[Cli.ContentOfFile("/var/secrets/private_key.der", 65535)]
 	public MemoryStream PrivateKey;
 
 2. [v] use nameof(param) instead of explicitly written string in argument of ArgumentNullException();

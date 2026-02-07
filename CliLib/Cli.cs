@@ -464,7 +464,7 @@ namespace CliLib
                         var filePath = argumentField.FilePath;
                         var fileInfo = new FileInfo(filePath);
                         if (!fileInfo.Exists)
-                            throw new ArgumentParseException(L10n.The_file_filePath_specified_as_a_data_source_for_parameter_argumentName_does_not_exists(fieldName, argumentName), obj);
+                            throw new ArgumentParseException(L10n.The_file_filePath_specified_as_a_data_source_for_parameter_argumentName_does_not_exists(filePath, argumentName), obj);
 
                         // validate file size
                         var maxFileSize = argumentField.FileMaxSize;
@@ -2018,7 +2018,7 @@ namespace CliLib
             maxFileSize = UInt32.MaxValue;
             foreach (var attr in fieldInfo.CustomAttributes)
             {
-                if (attr.AttributeType == typeof(FileContentAttribute))
+                if (attr.AttributeType == typeof(ContentOfFileAttribute))
                 {
                     var constuctorArgs = attr.ConstructorArguments.GetEnumerator();
                     if (constuctorArgs.MoveNext())
@@ -2313,7 +2313,7 @@ namespace CliLib
             public string Could_be_passed_via_environment_variable_envVar(string envVar)
                 => $"   - could be passed via environment variable ${envVar}";
             public string The_content_is_read_from_the_file(string filePath, uint maxFileSize)
-                => $"   - The content is read from the file '{filePath}', size limit is {maxFileSize} bytes";
+                => $"   - the content is read from the file '{filePath}', size limit is {maxFileSize} bytes";
 
             public string Could_be_specified_in_app_config_appSettings()
                 => $"   - could be specified in app.config / appSettings";
@@ -2331,7 +2331,7 @@ namespace CliLib
                 => $"The file {filePath} could not be read due to inner error";
 
             public string The_attribute_FileContentAttribute_is_only_applicable_to_fields_with_MemoryStream_type_but_the_fieldType_has_been_used_with_the_field_argumentField(string fieldType, string argumentField)
-                => $"The attribute '{nameof(FileContentAttribute)}' is only applicable to fields with {nameof(MemoryStream)} type but the '{fieldType}' has been used with the field '{argumentField}'";
+                => $"The attribute '{nameof(ContentOfFileAttribute)}' is only applicable to fields with {nameof(MemoryStream)} type but the '{fieldType}' has been used with the field '{argumentField}'";
             public string The_file_filePath_specified_as_a_data_source_for_parameter_argumentName_does_not_exists(string filePath, string argumentName)
                 => $"The file '{filePath}' specified as a data source for parameter '{argumentName}' does not exists!";
             public string The_size_of_file_filePath_fileSize_exceeds_the_limit_maxFileSize_for_parameter_argumentName(string filePath, long fileSize, long maxFileSize, string argumentName)
@@ -2459,7 +2459,7 @@ namespace CliLib
             public string The_file_could_not_be_read_due_to_inner_error(string filePath)
                 => $"Невозможно прочитать файл {filePath} из за следующей ошибки";
             public string The_attribute_FileContentAttribute_is_only_applicable_to_fields_with_MemoryStream_type_but_the_fieldType_has_been_used_with_the_field_argumentField(string fieldType, string argumentField)
-                => $"Атрибут '{nameof(FileContentAttribute)}' применим только к полям типа {nameof(MemoryStream)}, но атрибут '{fieldType}' использован с полем '{argumentField}'.";
+                => $"Атрибут '{nameof(ContentOfFileAttribute)}' применим только к полям типа {nameof(MemoryStream)}, но атрибут '{fieldType}' использован с полем '{argumentField}'.";
             public string The_file_filePath_specified_as_a_data_source_for_parameter_argumentName_does_not_exists(string filePath, string argumentName)
                 => $"Файл '{filePath}', указанный в качестве источника данных для параметра '{argumentName}', не существует!";
             public string The_size_of_file_filePath_fileSize_exceeds_the_limit_maxFileSize_for_parameter_argumentName(string filePath, long fileSize, long maxFileSize, string argumentName)
@@ -2892,9 +2892,9 @@ namespace CliLib
         }
 
         [AttributeUsage(AttributeTargets.Field)]
-        public class FileContentAttribute : Attribute
+        public class ContentOfFileAttribute : Attribute
         {
-            public FileContentAttribute(string filePath, uint maxFileSize = UInt32.MaxValue)
+            public ContentOfFileAttribute(string filePath, uint maxFileSize = UInt32.MaxValue)
             {
             }
         }
