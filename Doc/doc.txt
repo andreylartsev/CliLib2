@@ -16,9 +16,10 @@ Supported features:
 5. Reading parameter defaults from appSettings (yes, I know that appSettings is deprecated);
 6. Reading parameters from environment variables;
 7. Request missing or special/secret parameters interactively;
-8. Basic support for secret parameters that could be passed to program either via environment variable or interactively and it's value never appears in the program output like help generation.
-9. Embedded localization support through implementation of Cli.LocalizedLitteralls interface;
-10. Syntax sugar to simplify Main() method implementation using SimpleCommandLine / MultiCommandLine classes.
+8. Reading parameter value from the file;
+9. Basic support for secret parameters that could be passed to program either via environment variable or interactively and it's value never appears in the program output like help generation.
+10. Embedded localization support through implementation of Cli.LocalizedLitteralls interface;
+11. Syntax sugar to simplify Main() method implementation using SimpleCommandLine / MultiCommandLine classes.
 
 
 In details:
@@ -204,9 +205,19 @@ through using Cli.AllowedRegexPattern and Cli.AllowedRange attributes
 		   - press Ctrl-C to interrupt
 		> *****
 
+8. Reading parameter value from the file;
+
+        [Cli.ContentOfFile("/etc/passwd", 65535)]
+        [Cli.Required]
+        [Cli.Secret]
+        public MemoryStream Passwd;
+
+		This argument will be read from the file during Cli.ParseCommandLine()
+		Only MemoryStream data type is supported
+		In case the file is missing or file size is over 65535 bytes the ArgumentParseException will be thrown
 
 
-8. Basic support for secrets. The attribute Cli.Secret if applied prevents displaying of it's value in generated help, samples and in the interactive communication.
+9. Basic support for secrets. The attribute Cli.Secret if applied prevents displaying of it's value in generated help, samples and in the interactive communication.
    
         [Cli.Doc("Master key to decrypt secrets stored within configuration")]
         [Cli.Interactive("Please enter master key", false)]
@@ -217,9 +228,9 @@ through using Cli.AllowedRegexPattern and Cli.AllowedRange attributes
 		...
 
 
-9. Embedded localization support through implementation of Cli.LocalizedLitterals interface within Cli.cs (no extra resources needed)
+10. Embedded localization support through implementation of Cli.LocalizedLitterals interface within Cli.cs (no extra resources needed)
 
-10. Use of SimpleCommandLine and MultiCommandLine classes to simplify Main() method implementation:
+11. Use of SimpleCommandLine and MultiCommandLine classes to simplify Main() method implementation:
 	See the sample Sample02_RestOfArguments:
 
         public static void Main(string[] args)
